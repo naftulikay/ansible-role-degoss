@@ -1,0 +1,4 @@
+---
+# handlers file for degoss
+ - name: clean
+   file: path=/tmp/degoss state=absent

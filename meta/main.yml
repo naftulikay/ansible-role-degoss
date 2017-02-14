@@ -1,0 +1,29 @@
+galaxy_info:
+  author: Naftuli Kay
+  description: Install, run, and remove Goss and tests against a system.
+
+  license: MIT
+
+  min_ansible_version: 2.2
+
+  platforms:
+    - name: EL
+      versions:
+        - 5
+        - 6
+        - 7
+    - name: Fedora
+      versions:
+        - 23
+        - 24
+        - 25
+    - name: Ubuntu
+      versions:
+        - trusty
+        - xenial
+        - yakkety
+
+  galaxy_tags:
+    - goss
+
+dependencies: []

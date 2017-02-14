@@ -1,0 +1,45 @@
+---
+ # optionally find the latest version of goss using the GitHub "API"
+ - name: detect latest version
+   shell: |
+    curl -sIS https://github.com/aelsabbahy/goss/releases/latest | \
+      tr -d '\r' | \
+      grep -oP '(?<=Location:\s).*' | \
+      grep -oP '(?<=v)\d+\.\d+\.\d+'
+   register: detected_latest
+   when: version == "latest"
+
+ - name: set detected version
+   set_fact:
+     version: "{{ detected_latest.stdout.strip() }}"
+   when: version == "latest"
+
+ # set play facts
+ - name: set facts
+   set_fact:
+     download_url: "https://github.com/aelsabbahy/goss/releases/download/v{{ version }}/goss-linux-amd64"
+
+ # create goss directories
+ - name: create goss directories
+   file: path={{ item }} state=directory
+   with_items:
+     - /tmp/degoss
+     - /tmp/degoss/bin
+     - /tmp/degoss/tests
+   notify: clean
+
+ # download goss
+ - name: install
+   get_url:
+     url: "{{ download_url }}"
+     dest: /tmp/degoss/bin/goss
+     mode: 0755e
+
+ # deploy test cases
+ - name: deploy tests
+   copy: src={{ item }} dest=/tmp/degoss/tests
+   with_items: "{{ tests }}"
+
+ # run the tests
+ - name: run tests
+   goss: path="{{ item }}" format="{{ format }}"

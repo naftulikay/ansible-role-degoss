@@ -1,0 +1,5 @@
+---
+# check that ssh is running
+service:
+  sshd:
+    running: true

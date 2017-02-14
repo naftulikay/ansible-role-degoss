@@ -1,0 +1,44 @@
+---
+language: python
+
+# support minimum python versions specified here:
+# https://docs.ansible.com/ansible/dev_guide/developing_modules_python3.html
+python:
+  - "2.6"
+  - "3.5"
+
+cache:
+  pip: true
+
+env:
+  - GOSS_VERSION=0.2.5
+
+# Use the new container infrastructure
+sudo: true
+
+# Install ansible
+addons:
+  apt:
+    packages:
+      - python-pip
+
+install:
+  # Install ansible
+  - pip install ansible
+
+  # Check ansible version
+  - ansible --version
+
+  # Create ansible.cfg with correct roles_path
+  - printf '[defaults]\nroles_path=../' > ansible.cfg
+
+script:
+  # Basic role syntax check
+  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+  # Run the role locally
+  - ansible-playbook tests/test.yml -i tests/inventory -c local -e goss_version=$GOSS_VERSION
+  # Validate that Goss does the thing
+  - tests/validate-install.sh
+
+notifications:
+  webhooks: https://galaxy.ansible.com/api/v1/notifications/
