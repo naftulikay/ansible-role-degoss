@@ -33,7 +33,7 @@
    get_url:
      url: "{{ download_url }}"
      dest: /tmp/degoss/bin/goss
-     mode: 0755e
+     mode: 0755
 
  # deploy test cases
  - name: deploy tests
