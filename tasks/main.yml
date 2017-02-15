@@ -7,17 +7,22 @@
       grep -oP '(?<=Location:\s).*' | \
       grep -oP '(?<=v)\d+\.\d+\.\d+'
    register: detected_latest
-   when: version == "latest"
+   when: version == latest
 
  - name: set detected version
    set_fact:
-     version: "{{ detected_latest.stdout.strip() }}"
-   when: version == "latest"
+     real_version: "{{ detected_latest.stdout.strip() }}"
+   when: version == latest
+
+ - name: set specified verison
+   set_fact:
+     real_version: "{{ version }}"
+   when: version != latest
 
  # set play facts
  - name: set facts
    set_fact:
-     download_url: "https://github.com/aelsabbahy/goss/releases/download/v{{ version }}/goss-linux-amd64"
+     download_url: "https://github.com/aelsabbahy/goss/releases/download/v{{ real_version }}/goss-linux-amd64"
 
  # create goss directories
  - name: create goss directories
