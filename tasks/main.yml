@@ -7,17 +7,17 @@
       grep -oP '(?<=Location:\s).*' | \
       grep -oP '(?<=v)\d+\.\d+\.\d+'
    register: detected_latest
-   when: version == latest
+   when: version == "latest"
 
  - name: set detected version
    set_fact:
      real_version: "{{ detected_latest.stdout.strip() }}"
-   when: version == latest
+   when: version == "latest"
 
  - name: set specified verison
    set_fact:
      real_version: "{{ version }}"
-   when: version != latest
+   when: version != "latest"
 
  # set play facts
  - name: set facts
