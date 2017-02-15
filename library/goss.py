@@ -41,13 +41,10 @@ examples:
 
 # launch goss validate command on the file
 def check(module, test_file_path, output_format, executable='goss'):
-    cmd = ""
-    if output_format is not None:
-        cmd = "{exec} -g {test_file} v --format {fmt}".format(exec=executable, test_file=test_file_path, fmt=output_format)
-    else:
-        cmd = "{exec} -g {test} v".format(exec=executable, test=test_file_path)
 
-    return module.run_command(cmd)
+    output_format = 'rspecish' if not output_format else output_format
+
+    return module.run_command("{0} -g {1} v --format {2}".format(executable, test_file_path, output_format))
 
 
 # write goss result to output_file_path
