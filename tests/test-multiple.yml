@@ -1,0 +1,10 @@
+---
+- name: test multiple files
+  hosts: localhost
+  remote_user: root
+  roles:
+    # since this is the project name in git, we need this for travis
+    - role: ansible-role-degoss
+      tests:
+        - fixtures/pass1.yml
+        - fixtures/pass2.yml
