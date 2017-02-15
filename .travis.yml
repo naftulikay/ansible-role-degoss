@@ -35,11 +35,14 @@ install:
 
 script:
   # Basic role syntax check
-  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
-  # Run the role locally
-  - ansible-playbook tests/test.yml -i tests/inventory -c local -e goss_version=$GOSS_VERSION
-  # Validate that Goss does the thing
-  - tests/validate-install.sh
+  - ansible-playbook tests/test-default.yml -i tests/inventory --syntax-check
+  # Run the role locally with defaults
+  - ansible-playbook tests/test-default.yml -i tests/inventory -c local -e goss_version=$GOSS_VERSION
+  # Run multiple tests
+  - ansible-playbook tests/test-multiple.yml -i tests/inventory -c local
+  # Run a failed test to validate output
+  - ansible-playbook tests/test-failure.yml -i tests/inventory -c local || true
+  - ansible-playbook tests/test-failure.yml -i tests/inventory -c local -e format=json || true
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
