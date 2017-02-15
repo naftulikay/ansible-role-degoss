@@ -1,5 +1,5 @@
 ---
-# check that ssh is running
-service:
-  sshd:
-    running: true
+# check that the dev directory exists, it always should
+file:
+  '/dev':
+    exists: true
