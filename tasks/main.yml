@@ -37,7 +37,7 @@
 
  # deploy test cases
  - name: deploy tests
-   copy: src={{ item }} dest=/tmp/degoss/tests
+   copy: src={{ item }} dest=/tmp/degoss/tests/
    with_items: "{{ tests }}"
 
  # run the tests
