@@ -40,12 +40,13 @@ examples:
 
 
 # launch goss validate command on the file
-def check(module, test_file_path, output_format):
+def check(module, test_file_path, output_format, executable='goss'):
     cmd = ""
     if output_format is not None:
-        cmd = "goss -g {0} v --format {1}".format(test_file_path, output_format)
+        cmd = "{exec} -g {test} v --format {format}".format(exec=executable, test=test_file_path, format=output_format)
     else:
-        cmd = "goss -g {0} v".format(test_file_path)
+        cmd = "{exec} -g {test} v".format(exec=executable, test=test_file_path)
+
     return module.run_command(cmd)
 
 
@@ -62,6 +63,7 @@ def main():
             path=dict(required=True, type='str'),
             format=dict(required=False, type='str'),
             output_file=dict(required=False, type='str'),
+            executable=dict(required=False, type='str', default='goss')
         ),
         supports_check_mode=False
     )
@@ -69,6 +71,7 @@ def main():
     test_file_path = module.params['path']  # test file path
     output_format = module.params['format']  # goss output format
     output_file_path = module.params['output_file']
+    executable = module.params['executable']
 
     if test_file_path is None:
         module.fail_json(msg="test file path is null")
@@ -84,7 +87,7 @@ def main():
     if os.path.isdir(test_file_path):
         module.fail_json(msg="Test file must be a file ! : %s" % (test_file_path))
 
-    (rc, out, err) = check(module, test_file_path, output_format)
+    (rc, out, err) = check(module, test_file_path, output_format, executable)
 
     if output_file_path is not None:
         output_file_path = os.path.expanduser(output_file_path)

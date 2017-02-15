@@ -47,5 +47,5 @@
 
  # run the tests
  - name: run tests
-   goss: path="{{ item }}" format="{{ format }}"
+   goss: executable=/tmp/degoss/bin/goss path="{{ item }}" format="{{ format }}"
    with_fileglob: /tmp/degoss/tests/*.yml
