@@ -12,6 +12,7 @@ cache:
 
 env:
   - GOSS_VERSION=0.2.5
+  - GOSS_VERSION=latest
 
 # Use the new container infrastructure
 sudo: true
