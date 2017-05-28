@@ -1,0 +1,325 @@
+#!/usr/bin/env bash
+
+TERMINFO=$(tput init && tput sgr0)
+
+FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+: ${LOGGING_LEVEL="info"}
+
+declare -a LOGGING_LEVELS
+LOGGING_LEVELS=("trace" "debug" "info" "warn" "error" "silent")
+
+declare -A ALLOWED_LOGGING_LEVELS
+ALLOWED_LOGGING_LEVELS=(
+  ["trace"]="trace|debug|info|warn|error"
+  ["debug"]="debug|info|warn|error"
+  ["info"]="info|warn|error"
+  ["warn"]="warn|error"
+  ["error"]="error"
+  ["silent"]=""
+)
+
+declare -A COLOR_IDS
+COLOR_IDS=(
+  ["black"]="0"
+  ["red"]="1"
+  ["green"]="2"
+  ["yellow"]="3"
+  ["blue"]="4"
+  ["magenta"]="5"
+  ["cyan"]="6"
+  ["white"]="7"
+)
+
+CONTAINER_ID_FILE="/tmp/container-id"
+SYSTEMD_FLAGS="--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+
+function .join() {
+  local separator="$1" && shift
+
+  while [ $# -gt 0 ]; do
+    echo -n "${1}$(test $# -gt 1 && echo -e "${separator}")"
+    shift
+  done
+
+  echo
+}
+
+function .split() {
+  local delimiter="$1"
+  local body="$2"
+
+  local index=(0)
+  declare -a result
+  for item in $(echo $body | tr $delimiter '\n') ; do
+    result[$index]=$item
+    index=$(($index + 1))
+  done
+
+  echo ${result[@]}
+}
+
+function .contains() {
+  local haystack="$1"
+  local needle="$2"
+
+  for item in ${haystack[@]} ; do
+    echo "$item" | grep -qP "\b${needle}\b" && return 0
+  done
+
+  return 1
+}
+
+function .to-lower() {
+  echo $@ | awk '{print tolower($0);}'
+}
+
+function .to-upper() {
+  echo $@ | awk '{print toupper($0);}'
+}
+
+function .is-terminal() {
+  local rc=$(test -t 1)
+  return $rc
+}
+
+function .set-fg-color() {
+  local color="$1"
+  local color_id="$1"
+
+  if ! echo ${color} | grep -qP '\d+' ; then
+    # if it's not already an id, look it up
+    color_id="${COLOR_IDS[$color_id]}"
+  fi
+
+  if .is-terminal ; then
+    tput setaf ${color_id}
+  fi
+}
+
+function .term-bold() {
+  tput bold
+}
+
+function .term-reset() {
+  tput sgr0
+}
+
+function .debug () {
+  if .is-log-allowed debug ; then
+    .log debug $@
+  fi
+}
+
+function .info() {
+  if .is-log-allowed info ; then
+    .log info $@
+  fi
+}
+
+function .warn() {
+  if .is-log-allowed warn ; then
+    .log warn $@
+  fi
+}
+
+function .error() {
+  if .is-log-allowed error ; then
+    .log error $@
+  fi
+}
+
+function .get-log-level() {
+  .to-lower "${LOGGING_LEVEL}"
+}
+
+function .is-log-allowed() {
+  local request_level="$(.to-lower $1)"
+  local current_level="$(.get-log-level)"
+  local allowed_levels=${ALLOWED_LOGGING_LEVELS[$current_level]}
+
+  if echo "$allowed_levels" | grep -qP "\b$request_level\b" ; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function .log() {
+  local level="$(.to-upper ${1:-SHRUG})"
+  local timestamp="$(date -u +"%Y-%m-%d %H:%M:%S%z")"
+  local color=""
+
+  shift # due to level
+
+  case $level in
+    DEBUG)
+      color=green
+      ;;
+    INFO)
+      color=blue
+      ;;
+    WARN)
+      color=yellow
+      ;;
+    ERROR)
+      color=red
+      ;;
+    *)
+      # ie no color
+      color=black
+      ;;
+  esac
+
+  # emit logging statement
+  .set-fg-color $color && \
+    printf '%-24s [%-5s] ' "${timestamp}" "${level}" && \
+    echo "$@" && \
+    .term-reset
+}
+
+function .usage() {
+  (
+    echo "usage: ${0:-runc} [start|exec]"
+    echo "  commands:"
+    echo "    start    Start the container."
+    echo "    exec     Execute a command in the container."
+    echo
+  ) >&2
+  return 1
+}
+
+function .usage-start() {
+  (
+    echo "usage ${0:-runc} start image [is_systemd]"
+    echo
+    echo "  arguments to start command:"
+    echo "    image      The image to pull and start."
+    echo "    is_systemd Literal string true if target container is initing"
+    echo "               on systemd, literal string false otherwise. Defaults"
+    echo "               to false."
+    echo
+  ) >&2
+  return 1;
+}
+
+function .start() {
+  if [ $# -lt 1 ]; then
+    .usage-start
+  fi
+
+  local image="${1}" && shift
+  local is_systemd="${1:-false}"
+
+  if [ -z "${image}" ]; then
+    .usage-start
+  fi
+
+  local container_id="$(test -f "${CONTAINER_ID_FILE}" && cat "${CONTAINER_ID_FILE}")"
+
+  if [ ! -z "$container_id" ]; then
+    if [ $(docker ps --format '{{.Id}}' -f "id=${container_id}" | wc -l) -gt 0 ]; then
+      .warn "Container $(cat "${CONTAINER_ID_FILE}") already running, not starting another."
+      return 0
+    else
+      .debug "Container id stale, starting new container."
+    fi
+  fi
+
+  # pull
+  .info "Pulling ${image}..."
+  docker pull ${image} >/dev/null
+
+  # start
+  .info "Starting ${image} as a $(test "$is_systemd" == "true" && echo systemd || echo non-systemd) container..."
+  local container_id="$(
+    docker run --detach \
+      $(test "$is_systemd" == "true" && echo ${SYSTEMD_FLAGS}) \
+      -v $(readlink -f "${FILE_DIR}/../"):/etc/ansible/roles/${role_name} \
+      -v $(readlink -f "${FILE_DIR}/ansible.cfg"):/etc/ansible/ansible.cfg \
+      ${image} | tee ${CONTAINER_ID_FILE}
+  )"
+  .info "Container ${container_id} started."
+}
+
+function .usage-exec() {
+  (
+    echo "usage: ${0:-} exec args..."
+    echo
+    echo "  arguments to exec command:"
+    echo "    args...  Arbitrary arguments to execute in the container."
+    echo
+    echo "             Environment variables matching container_env_* will be"
+    echo "             renamed and capitalized such that container_env_term"
+    echo "             will be set in the container as TERM."
+    echo
+  ) >&2
+  return 1
+}
+
+function .exec() {
+  if [ $# -lt 1 ]; then
+    .usage-exec
+  fi
+
+  local container_id="$(test -f "${CONTAINER_ID_FILE}" && cat "${CONTAINER_ID_FILE}")"
+  if [ -z "${container_id}" ]; then
+    .error "There is no container running."
+    return 1
+  fi
+
+  local command=("$@")
+  local env_variables=""
+
+  for container_env_var_name in $(env | grep -oP '^container_env_[-_\w\d]+') ; do
+    local container_env_dest="$(echo ${container_env_var_name} | sed 's:^container_env_::g' | awk '{print toupper($0);}')"
+    local container_env_val="$(printf "%s\n" "${!container_env_var_name}")"
+    env_variables="${env_variables} ${container_env_dest}=${container_env_val}"
+  done
+
+  test -z "${env_variables}" || env_variables="env ${env_variables}"
+
+  local argindex=$((0))
+  for arg in "${command[@]}" ; do
+    if [ $argindex -eq 0 ]; then
+      .debug "command: ${arg}"
+    else
+      .debug "arg[$(printf '%d' $argindex)]: ${arg}"
+    fi
+    argindex=$(($argindex + 1))
+  done
+
+  .info "Executing command \"${env_variables} ${command[*]}\" in container ${container_id}"
+  docker exec --tty ${container_id} ${env_variables} ${command[*]}
+}
+
+function .main() {
+  if [ $# -eq 0 ]; then
+    .usage
+  fi
+
+  while [ $# -gt 0 ]; do
+    case $1 in
+      start)
+        shift
+        .start $@
+        break
+        ;;
+      exec)
+        shift
+        .exec "$@"
+        break
+        ;;
+      *)
+        .usage;
+        ;;
+    esac
+
+    shift
+  done
+}
+
+if [[ "${BASH_SOURCE}" == "$0" ]]; then
+  set -e
+  .main "$@"
+fi
