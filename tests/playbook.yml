@@ -1,0 +1,10 @@
+---
+- name: demo
+  hosts: all
+  become: true
+  any_errors_fatal: true
+  vars:
+    should: 'pass'
+  roles:
+    - role: degoss
+      goss_file: goss/should-{{ should }}.yml

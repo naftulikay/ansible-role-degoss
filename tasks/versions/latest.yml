@@ -1,0 +1,23 @@
+---
+# optionally find the latest version of goss using the GitHub "API"
+- name: detect latest version
+  uri:
+    url: "{{ goss_github_repo_url }}/releases/latest"
+    status_code: 302
+    follow_redirects: false
+  register: detected_latest_url
+  when: goss_version == "latest"
+
+- name: establish regular expressions
+  set_fact:
+    diagnosis: "{{ goss_github_version_regex | trim }}"
+    prescription: "{{ goss_github_replacement | trim }}"
+  when: goss_version == "latest"
+
+- name: set detected version
+  set_fact:
+    goss_real_version: "{{ detected_latest_url.location | regex_replace(diagnosis, prescription) }}"
+  when: goss_version == "latest"
+
+- name: output detected version
+  debug: msg="Installing Latest Goss ({{ goss_real_version }})..."

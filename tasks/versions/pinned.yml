@@ -1,0 +1,5 @@
+---
+- name: set specified version
+  set_fact:
+    goss_real_version: "{{ goss_version }}"
+  when: goss_version != "latest"

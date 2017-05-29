@@ -1,0 +1,43 @@
+---
+- name: configure vagrant vm
+  hosts: all
+  become: true
+  tasks:
+    - name: configure shell nicety
+      blockinfile:
+        path: /home/vagrant/.bashrc
+        owner: vagrant
+        group: vagrant
+        mode: 0750
+        block: |
+          if [ $((history | wc -l)) -eq 0 ]; then
+            cd /vagrant
+          fi
+
+    - name: install system barebones
+      package: name={{ item }} state=present
+      with_items:
+        - bash-completion
+        - man-pages
+        - vim-enhanced
+
+    - name: install docker repository
+      yum_repository:
+        name: docker
+        description: Docker CE Stable - $basearch
+        baseurl: https://download.docker.com/linux/centos/7/$basearch/stable
+        enabled: true
+        gpgcheck: true
+        gpgkey: https://download.docker.com/linux/centos/gpg
+
+    - name: install docker
+      package: name=docker-ce state=present
+
+    - name: ensure user is in docker group
+      user: name=vagrant append=true groups=docker
+
+    - name: ensure docker started
+      systemd:
+        name: docker
+        state: started
+        enabled: true

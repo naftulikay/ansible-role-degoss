@@ -1,51 +1,62 @@
 ---
- # optionally find the latest version of goss using the GitHub "API"
- - name: detect latest version
-   shell: |
-    curl -sIS https://github.com/aelsabbahy/goss/releases/latest | \
-      tr -d '\r' | \
-      grep -oP '(?<=Location:\s).*' | \
-      grep -oP '(?<=v)\d+\.\d+\.\d+'
-   register: detected_latest
-   when: version == "latest"
+- include: versions/latest.yml
+  when: goss_version == "latest"
 
- - name: set detected version
-   set_fact:
-     real_version: "{{ detected_latest.stdout.strip() }}"
-   when: version == "latest"
+- include: versions/pinned.yml
+  when: goss_version != "latest"
 
- - name: set specified verison
-   set_fact:
-     real_version: "{{ version }}"
-   when: version != "latest"
+# set play facts
+- name: establish download url
+  set_fact:
+    goss_download_url: "{{ goss_github_repo_url }}/releases/download/v{{ goss_real_version }}/goss-linux-amd64"
 
- # set play facts
- - name: set facts
-   set_fact:
-     download_url: "https://github.com/aelsabbahy/goss/releases/download/v{{ real_version }}/goss-linux-amd64"
+# create goss directories
+- name: create goss directories
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ degoss_tmp_root }}"
+    - "{{ degoss_test_root }}"
+    - "{{ degoss_goss_install_dir }}"
+  changed_when: degoss_changed_when
 
- # create goss directories
- - name: create goss directories
-   file: path={{ item }} state=directory
-   with_items:
-     - /tmp/degoss
-     - /tmp/degoss/bin
-     - /tmp/degoss/tests
-   notify: clean
+# download goss
+- name: install
+  get_url:
+    url: "{{ goss_download_url }}"
+    dest: "{{ degoss_goss_bin }}-{{ goss_real_version }}"
+    mode: 0755
+  changed_when: degoss_changed_when
 
- # download goss
- - name: install
-   get_url:
-     url: "{{ download_url }}"
-     dest: /tmp/degoss/bin/goss
-     mode: 0755
+# symlink
+- name: link
+  file:
+    state: link
+    src: "{{ degoss_goss_bin }}-{{ goss_real_version }}"
+    dest: "{{ degoss_goss_bin }}"
+    force: true
+  changed_when: degoss_changed_when
 
- # deploy test cases
- - name: deploy tests
-   copy: src={{ item }} dest=/tmp/degoss/tests/
-   with_items: "{{ tests }}"
+# deploy test files including the main and additional test files
+- name: deploy test files
+  copy: src={{ goss_file }} dest={{ degoss_test_root }}
+  with_items: "{{ [goss_file] + goss_addtl_files + goss_addtl_dirs }}"
+  changed_when: degoss_changed_when
 
- # run the tests
- - name: run tests
-   goss: executable=/tmp/degoss/bin/goss path="{{ item }}" format="{{ format }}"
-   with_fileglob: /tmp/degoss/tests/*.yml
+# run the tests
+- name: run tests
+  goss: executable={{ degoss_goss_bin }} path="{{ goss_file }}" format="{{ goss_output_format }}"
+  # never report failure, allowing us to clean up and then report failure later
+  failed_when: false
+  register: goss_output
+
+# clean everything up
+- name: clean
+  file: path={{ degoss_tmp_root }} state=absent
+  when: degoss_no_clean is undefined and not degoss_no_clean
+  changed_when: degoss_changed_when
+
+# our output callback plugin will catch the tag of this and format output accordingly
+- name: report errors
+  fail: msg="Goss Tests Failed."
+  when: goss_output.goss_failed
+  tags: [format_goss_output]

@@ -1,3 +1,6 @@
 *.pyo
 *.pyc
 __pycache__
+
+# root level ignores
+/.vagrant

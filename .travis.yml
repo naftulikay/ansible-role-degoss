@@ -1,48 +1,58 @@
 ---
+dist: trusty
+sudo: required
+
 language: python
 
-# support minimum python versions specified here:
-# https://docs.ansible.com/ansible/dev_guide/developing_modules_python3.html
-python:
-  - "2.6"
-  - "3.5"
+matrix:
+  fast_finish: true
 
-cache:
-  pip: true
+services:
+  - docker
 
 env:
-  - GOSS_VERSION=0.2.5
-  - GOSS_VERSION=latest
+  global: # applied to every run
+    container_env_lang: en_US.utf-8
+    container_env_path: /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+    container_env_term: xterm
 
-# Use the new container infrastructure
-sudo: true
+    goss_version: "0.2.5"
 
-# Install ansible
-addons:
-  apt:
-    packages:
-      - python-pip
+    role_name: degoss
+
+  matrix: # each entry is its own run
+    - { image: "naftulikay/centos-vm:7",      systemd: true }
+    # - { image: "naftulikay/xenial-vm:latest", systemd: true }
+    # - { image: "naftulikay/trusty-vm:latest", systemd: false }
 
 install:
-  # Install ansible
-  - pip install ansible
-
-  # Check ansible version
-  - ansible --version
-
-  # Create ansible.cfg with correct roles_path
-  - printf '[defaults]\nroles_path=../' > ansible.cfg
+  - tests/runc start ${image} ${systemd}
+  # display version
+  - tests/runc exec ansible --version
+  # create a file that wouldn't otherwise exist
+  - tests/runc exec touch /otherwise-nonexistent
 
 script:
-  # Basic role syntax check
-  - ansible-playbook tests/test-default.yml -i tests/inventory --syntax-check
-  # Run the role locally with defaults
-  - ansible-playbook tests/test-default.yml -i tests/inventory -c local -e goss_version=$GOSS_VERSION
-  # Run multiple tests
-  - ansible-playbook tests/test-multiple.yml -i tests/inventory -c local
-  # Run a failed test to validate output
-  - ansible-playbook tests/test-failure.yml -i tests/inventory -c local || true
-  - ansible-playbook tests/test-failure.yml -i tests/inventory -c local -e format=json || true
+  # check syntax
+  - tests/runc exec ansible-playbook --syntax-check /etc/ansible/roles/${role_name}/tests/playbook.yml
+  # execute degoss
+  - tests/runc exec ansible-playbook -e goss_version=${goss_version} /etc/ansible/roles/${role_name}/tests/playbook.yml
+  # should fail; measure failure here:
+  - "(
+      set +e ;
+      ( tests/runc exec ansible-playbook -e goss_version=${goss_version} -e should=fail \
+          /etc/ansible/roles/${role_name}/tests/playbook.yml ; echo $? > /tmp/playbook.rc ) | tee /tmp/playbook.log ;
+      return_code=$(cat /tmp/playbook.rc) ;
+      failed_count=$(grep -oP '(?<=Failed:\\s)(\\d+)' /tmp/playbook.log | tail -n 1) ;
+      if [ $return_code -eq 0 ] ; then
+        echo \"ERROR: the playbook was expected to fail and did not.\" >&2 ;
+        exit 1 ;
+      fi ;
+      if [ -z \"$failed_count\" ] || [ $failed_count -lt 1 ]; then
+        echo \"ERROR: the playbook was expected to have failed at least one Goss test. (failed: ${failed_count:-undefined})\" >&2 ;
+        exit 1 ;
+      fi ;
+    )"
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
