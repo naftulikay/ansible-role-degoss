@@ -38,7 +38,7 @@
 
 # deploy test files including the main and additional test files
 - name: deploy test files
-  copy: src={{ goss_file }} dest={{ degoss_test_root }}
+  copy: src={{ item }} dest={{ degoss_test_root }}
   with_items: "{{ [goss_file] + goss_addtl_files + goss_addtl_dirs }}"
   changed_when: degoss_changed_when
 
