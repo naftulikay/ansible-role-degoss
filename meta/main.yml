@@ -9,19 +9,11 @@ galaxy_info:
   platforms:
     - name: EL
       versions:
-        - 5
-        - 6
         - 7
-    - name: Fedora
-      versions:
-        - 23
-        - 24
-        - 25
     - name: Ubuntu
       versions:
         - trusty
         - xenial
-        - yakkety
 
   galaxy_tags:
     - goss
