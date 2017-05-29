@@ -16,14 +16,14 @@ env:
     container_env_path: /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
     container_env_term: xterm
 
-    goss_version: "0.2.5"
+    goss_version: "0.3.2"
 
     role_name: degoss
 
   matrix: # each entry is its own run
     - { image: "naftulikay/centos-vm:7",      systemd: true }
-    # - { image: "naftulikay/xenial-vm:latest", systemd: true }
-    # - { image: "naftulikay/trusty-vm:latest", systemd: false }
+    - { image: "naftulikay/xenial-vm:latest", systemd: true }
+    - { image: "naftulikay/trusty-vm:latest", systemd: false }
 
 install:
   - tests/runc start ${image} ${systemd}
