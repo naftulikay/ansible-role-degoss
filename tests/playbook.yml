@@ -1,5 +1,13 @@
 ---
-- name: demo
+- name: setup
+  hosts: all
+  become: true
+  any_errors_fatal: true
+  tasks:
+    - name: create otherwise nonexistent file
+      copy: content="" dest=/tmp/nonexistent
+
+- name: role
   hosts: all
   become: true
   any_errors_fatal: true
@@ -8,3 +16,5 @@
   roles:
     - role: degoss
       goss_file: goss/should-{{ should }}.yml
+      goss_env_vars:
+        distro: "{{ ansible_distribution | lower }}"

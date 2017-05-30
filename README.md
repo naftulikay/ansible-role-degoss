@@ -26,6 +26,8 @@ Please see `vars/main.yml` for a full list, but here are the few that are probab
   <dd>Additional directories containing Goss test files to copy to the machine, recursively.</dd>
   <dt><code>goss_version</code></dt>
   <dd>The version string of Goss to install, or <code>latest</code>. Example: <code>0.2.5</code>.</dd>
+  <dt><code>goss_env_vars</code></dt>
+  <dd>A dictionary of environment variables to set during Goss execution.</dd>
 </dl>
 
 ## Dependencies
@@ -72,6 +74,23 @@ Executes `goss.yaml`, uploading the `tests` directory and some other files:
       goss_addtl_files: [include.yml]
       goss_addtl_dirs: [tests/]
 ```
+
+### Environment Variables
+
+Executes `goss.yml`, passing in the given environment variables:
+
+```yaml
+---
+- name: test
+  hosts: all
+  roles:
+    - role: degoss
+      goss_file: goss.yml
+      goss_env_vars:
+        distro: "{{ ansible_distribution | lower }}"
+```
+
+In this case, `distro` will be available to Goss at runtime at `{{.Env.distro}}`.
 
 ## License
 

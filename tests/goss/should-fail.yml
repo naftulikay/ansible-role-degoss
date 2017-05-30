@@ -3,3 +3,12 @@
 file:
   '/dev':
     exists: false
+
+package:
+{{ if eq .Env.distro "centos" }}
+  centos-release:
+    installed: false
+{{ else if eq .Env.distro "ubuntu" }}
+  ubuntu-keyring:
+    installed: false
+{{ end }}
