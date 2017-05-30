@@ -26,6 +26,11 @@ options:
     default: goss
     description:
       - The executable to use when invoking Goss.
+  env_vars:
+    required: false
+    default: \{\}
+    description:
+      - A map of environment variables to set when running Goss.
 
 examples:
   - name: execute goss file
@@ -41,8 +46,11 @@ examples:
 GOSS_OUTPUT_FORMATS = ("rspecish", "documentation", "json", "tap", "junit", "nagios", "nagios_verbose", "silent")
 
 # launch goss validate command on the file
-def evaluate(module, test_file, output_format, executable):
-    return module.run_command("{0} -g {1} validate --format {2}".format(executable, test_file, output_format))
+def evaluate(module, test_file, output_format, executable, env_vars):
+    return module.run_command(
+        "{0} -g {1} validate --format {2}".format(executable, test_file, output_format),
+        environ_update=env_vars
+    )
 
 def succeed(module, **kwargs):
     module.exit_json(changed=False, failed=False, goss_failed=False, **kwargs)
@@ -55,7 +63,8 @@ def main():
         argument_spec=dict(
             path=dict(required=True, type='str'),
             format=dict(required=False, type='str', choices=GOSS_OUTPUT_FORMATS),
-            executable=dict(required=False, type='str', default='goss')
+            executable=dict(required=False, type='str', default='goss'),
+            env_vars=dict(required=False, type='dict', default={})
         ),
         supports_check_mode=False
     )
@@ -63,6 +72,7 @@ def main():
     test_file = os.path.expanduser(module.params['path'])  # test file path
     fmt = module.params['format']  # goss output format
     executable = module.params['executable']
+    env_vars = module.params['env_vars']
 
     if not test_file or len(test_file) == 0:
         fail(module, "Goss test file is undefined.")
@@ -75,7 +85,7 @@ def main():
     if not os.access(test_file, os.R_OK):
         fail(module, "Goss test file {} is not readable.".format(test_file))
 
-    rc, stdout, stderr = evaluate(module, test_file, fmt, executable)
+    rc, stdout, stderr = evaluate(module, test_file, fmt, executable, env_vars)
 
     result = dict(rc=rc, stdout=stdout, stderr=stderr)
 

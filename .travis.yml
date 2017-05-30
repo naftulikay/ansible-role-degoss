@@ -29,30 +29,19 @@ install:
   - tests/runc start ${image} ${systemd}
   # display version
   - tests/runc exec ansible --version
-  # create a file that wouldn't otherwise exist
-  - tests/runc exec touch /otherwise-nonexistent
 
 script:
   # check syntax
   - tests/runc exec ansible-playbook --syntax-check /etc/ansible/roles/${role_name}/tests/playbook.yml
-  # execute degoss
+  # execute degoss without a version
+  - tests/runc exec ansible-playbook /etc/ansible/roles/${role_name}/tests/playbook.yml
+  # execute degoss with a version
   - tests/runc exec ansible-playbook -e goss_version=${goss_version} /etc/ansible/roles/${role_name}/tests/playbook.yml
-  # should fail; measure failure here:
-  - "(
-      set +e ;
-      ( tests/runc exec ansible-playbook -e goss_version=${goss_version} -e should=fail \
-          /etc/ansible/roles/${role_name}/tests/playbook.yml ; echo $? > /tmp/playbook.rc ) | tee /tmp/playbook.log ;
-      return_code=$(cat /tmp/playbook.rc) ;
-      failed_count=$(grep -oP '(?<=Failed:\\s)(\\d+)' /tmp/playbook.log | tail -n 1) ;
-      if [ $return_code -eq 0 ] ; then
-        echo \"ERROR: the playbook was expected to fail and did not.\" >&2 ;
-        exit 1 ;
-      fi ;
-      if [ -z \"$failed_count\" ] || [ $failed_count -lt 1 ]; then
-        echo \"ERROR: the playbook was expected to have failed at least one Goss test. (failed: ${failed_count:-undefined})\" >&2 ;
-        exit 1 ;
-      fi ;
-    )"
+  # test and measure failure
+  - "tests/fail ansible-playbook \
+      -e goss_version=${goss_version} \
+      -e should=fail \
+      /etc/ansible/roles/${role_name}/tests/playbook.yml"
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/

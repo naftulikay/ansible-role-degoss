@@ -44,7 +44,11 @@
 
 # run the tests
 - name: run tests
-  goss: executable={{ degoss_goss_bin }} path="{{ goss_file }}" format="{{ goss_output_format }}"
+  goss:
+    executable: "{{ degoss_goss_bin }}"
+    path: "{{ goss_file }}"
+    format: "{{ goss_output_format }}"
+    env_vars: "{{ goss_env_vars }}"
   # never report failure, allowing us to clean up and then report failure later
   failed_when: false
   register: goss_output

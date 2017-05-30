@@ -293,6 +293,86 @@ function .exec() {
   docker exec --tty ${container_id} ${env_variables} ${command[*]}
 }
 
+function .usage-stop() {
+  (
+    echo "usage: ${0:-} stop"
+    echo "Stops the current VM if running."
+    echo
+  ) >&2
+  return 1
+}
+
+function .stop() {
+  local container_id="$(test -f ${CONTAINER_ID_FILE} && cat ${CONTAINER_ID_FILE})"
+
+  if [ -z "$container_id" ]; then
+    .error "No VM running."
+    return 1
+  fi
+
+  .info "Stopping Container ${container_id}..."
+
+  if docker ps --filter Id=${container_id} --format '{{.ID}}' | grep -q '.*' ; then
+    .debug "Container running, issuing a Docker kill command"
+    docker kill ${container_id} >/dev/null
+  else
+    .debug "Container not running, nothing to do."
+  fi
+
+  .info "Cleaning Up..."
+
+  if docker ps -a --filter Id=${container_id} --format '{{.ID}}' | grep -q '.*' ; then
+    .debug "Traces of the container remain, removing them with Docker rm"
+    docker rm --force --volumes ${container_id} >/dev/null
+  else
+    .debug "No traces of the container remain."
+  fi
+
+  # important! remove the container id file
+  rm -f ${CONTAINER_ID_FILE}
+}
+
+function .get-container-image() {
+  local container_id="$1"
+
+  docker ps -a --filter Id=${container_id} --format '{{.Image}}'
+}
+
+function .usage-status() {
+  (
+    echo "usage: ${0:-} status"
+    echo "Report the status of the VM."
+    echo
+  ) >&2
+  return 1
+}
+
+function .status() {
+  local container_id="$(test -f ${CONTAINER_ID_FILE} && cat ${CONTAINER_ID_FILE})"
+
+  if [ -z "$container_id" ] && ! docker ps --filter Id=${container_id} --format '{{.ID}}' | grep -q '.*' ; then
+    .set-fg-color yellow && .term-bold && \
+      echo "No VM running." && \
+      .term-reset
+
+    # attempt to clean up
+    docker ps -a --filter Id=${container_id} --format '{{.ID}}' | grep -qP '.+' &&
+      docker rm --force --volumes ${container_id} >/dev/null || true
+
+    rm -f ${CONTAINER_ID_FILE}
+    return 1
+  fi
+
+  local image="$(.get-container-image ${container_id})"
+
+  .set-fg-color green && .term-bold && \
+    echo "${image}: running " && \
+    .term-reset && \
+    echo "  (${container_id})"
+
+  return 0
+}
+
 function .main() {
   if [ $# -eq 0 ]; then
     .usage
@@ -308,6 +388,16 @@ function .main() {
       exec)
         shift
         .exec "$@"
+        break
+        ;;
+      stop)
+        shift
+        .stop "$@"
+        break
+        ;;
+      status)
+        shift
+        .status "$@"
         break
         ;;
       *)
