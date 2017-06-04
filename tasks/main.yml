@@ -59,8 +59,13 @@
   when: degoss_no_clean is undefined and not degoss_no_clean
   changed_when: degoss_changed_when
 
+- name: emit debugging output
+  debug:
+    msg: "output info: {{ goss_output | to_nice_json }}"
+  when: degoss_dump_output is defined
+
 # our output callback plugin will catch the tag of this and format output accordingly
 - name: report errors
   fail: msg="Goss Tests Failed."
-  when: goss_output.get('goss_failed', true)
+  when: goss_output.get('goss_failed')
   tags: [format_goss_output]
