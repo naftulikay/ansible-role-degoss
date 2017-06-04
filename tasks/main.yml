@@ -62,5 +62,5 @@
 # our output callback plugin will catch the tag of this and format output accordingly
 - name: report errors
   fail: msg="Goss Tests Failed."
-  when: goss_output.goss_failed
+  when: goss_output.get('goss_failed', true)
   tags: [format_goss_output]
