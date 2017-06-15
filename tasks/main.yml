@@ -49,23 +49,29 @@
     path: "{{ goss_file }}"
     format: "{{ goss_output_format }}"
     env_vars: "{{ goss_env_vars }}"
-  # never report failure, allowing us to clean up and then report failure later
   failed_when: false
   register: goss_output
 
 # clean everything up
 - name: clean
   file: path={{ degoss_tmp_root }} state=absent
-  when: degoss_no_clean is undefined and not degoss_no_clean
+  when: degoss_no_clean is undefined and not (degoss_no_clean|bool)
   changed_when: degoss_changed_when
 
 - name: emit debugging output
   debug:
-    msg: "output info: {{ goss_output | to_nice_json }}"
-  when: degoss_dump_output is defined
+    msg: "output info: {{ goss_output }}"
+  # only emit debug output when degoss_debug/degoss_dump_output is defined and truthy and when goss failed for sure
+  when: |-
+      (degoss_dump_output is defined and degoss_dump_output|bool) or (degoss_debug is defined and degoss_debug|bool)
 
 # our output callback plugin will catch the tag of this and format output accordingly
 - name: report errors
   fail: msg="Goss Tests Failed."
-  when: goss_output.get('goss_failed')
+  when: goss_output.get('goss_failed') | bool
   tags: [format_goss_output]
+
+- name: report module errors
+  fail: msg="Goss Module Run Failed."
+  when: goss_output.get('msg')|lower == "module failure"
+  tags: [format_goss_stacktrace]
