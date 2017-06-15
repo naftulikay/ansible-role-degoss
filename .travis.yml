@@ -2,8 +2,6 @@
 dist: trusty
 sudo: required
 
-language: python
-
 matrix:
   fast_finish: true
 
@@ -12,36 +10,17 @@ services:
 
 env:
   global: # applied to every run
-    container_env_lang: en_US.utf-8
-    container_env_path: /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
-    container_env_term: xterm
-
-    goss_version: "0.3.2"
-
-    role_name: degoss
+    ROLE_NAME: degoss
 
   matrix: # each entry is its own run
-    - { image: "naftulikay/centos-vm:7",      systemd: true }
-    - { image: "naftulikay/xenial-vm:latest", systemd: true }
-    - { image: "naftulikay/trusty-vm:latest", systemd: false }
+    - IMAGE_NAME: "naftulikay/centos-vm:7"
+    - IMAGE_NAME: "naftulikay/xenial-vm:latest"
+    - IMAGE_NAME: "naftulikay/trusty-vm:latest"
 
-install:
-  - tests/runc start ${image} ${systemd}
-  # display version
-  - tests/runc exec ansible --version
-
-script:
-  # check syntax
-  - tests/runc exec ansible-playbook --syntax-check /etc/ansible/roles/${role_name}/tests/playbook.yml
-  # execute degoss without a version
-  - tests/runc exec ansible-playbook /etc/ansible/roles/${role_name}/tests/playbook.yml
-  # execute degoss with a version
-  - tests/runc exec ansible-playbook -e goss_version=${goss_version} /etc/ansible/roles/${role_name}/tests/playbook.yml
-  # test and measure failure
-  - "tests/fail ansible-playbook \
-      -e goss_version=${goss_version} \
-      -e should=fail \
-      /etc/ansible/roles/${role_name}/tests/playbook.yml"
+script: make test-clean
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
+  email:
+    on_success: never
+    on_failure: never
