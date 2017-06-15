@@ -20,3 +20,11 @@
       goss_env_vars:
         distro: "{{ ansible_distribution | lower }}"
         should: "{{ should }}"
+        boolean: true
+        list:
+          - one
+          - two
+          - three
+        dict:
+          a: b
+          c: d
