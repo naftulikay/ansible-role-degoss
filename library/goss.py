@@ -72,7 +72,7 @@ def main():
     test_file = os.path.expanduser(module.params['path'])  # test file path
     fmt = module.params['format']  # goss output format
     executable = module.params['executable']
-    env_vars = module.params['env_vars']
+    env_vars = module.params['env_vars'] or {}
 
     if not test_file or len(test_file) == 0:
         fail(module, "Goss test file is undefined.")
@@ -84,6 +84,10 @@ def main():
     # test if the test file is readable
     if not os.access(test_file, os.R_OK):
         fail(module, "Goss test file {} is not readable.".format(test_file))
+
+    # sanitize the environment variables
+    for key, value in env_vars.items():
+        env_vars.update(**{ key: str(value) })
 
     rc, stdout, stderr = evaluate(module, test_file, fmt, executable, env_vars)
 
