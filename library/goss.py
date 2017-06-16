@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
-import os
+import json, os, re, sys
 from ansible.module_utils.basic import *
+from ansible.module_utils.six import integer_types, string_types
+
+
+BOOLEAN_MATCHER = re.compile(r'(?P<value>True|False)', re.I)
 
 DOCUMENTATION = '''
 ---
@@ -45,6 +49,9 @@ examples:
 
 GOSS_OUTPUT_FORMATS = ("rspecish", "documentation", "json", "tap", "junit", "nagios", "nagios_verbose", "silent")
 
+def log(msg):
+    sys.stderr.write("{}\n".format(msg))
+
 # launch goss validate command on the file
 def evaluate(module, test_file, output_format, executable, env_vars):
     return module.run_command(
@@ -87,7 +94,19 @@ def main():
 
     # sanitize the environment variables
     for key, value in env_vars.items():
-        env_vars.update(**{ key: str(value) })
+        log("key({}): {}, value({}): {}".format(type(key), key, type(value), value))
+
+        if isinstance(value, bool):
+            # if it's a boolean, lowercase and convert to string
+            env_vars[key] = str(value).lower()
+        elif isinstance(value, string_types) or isinstance(value, integer_types) or isinstance(value, float):
+            # leave it be
+            continue
+        else:
+            # anything more complicated, let JSON do its thing
+            env_vars[key] = json.dumps(value)
+
+    sys.stderr.write("{}\n".format(env_vars))
 
     rc, stdout, stderr = evaluate(module, test_file, fmt, executable, env_vars)
 

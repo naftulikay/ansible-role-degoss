@@ -1,7 +1,7 @@
 ---
 file:
   '/dev':
-    exists: true
+    exists: {{.Env.boolean}}
 
 gossfile:
   'goss/should-{{.Env.should}}.yml': {}
