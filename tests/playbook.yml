@@ -15,6 +15,8 @@
     should: 'pass'
   roles:
     - role: degoss
+      degoss_no_clean: true
+      degoss_debug: true
       goss_file: goss.yml
       goss_addtl_dirs: [goss]
       goss_env_vars:
