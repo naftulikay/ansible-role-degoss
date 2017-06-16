@@ -3,7 +3,7 @@
 Installs, runs, and removes [Goss][goss] and one or more Goss spec file(s) on a system. If you'd like to lint a system
 without leaving many "traces,"<sup>1</sup> `degoss` should do what you want.
 
-Props to upstream [ansible-goss][ansible-goss] for inspiration for the module and the majority of the plugin code.
+Props to upstream [ansible-goss][ansible-goss] for inspiration for the module and first steps.
 
 Available on Ansible Galaxy at [`naftulikay.degoss`][galaxy].
 
@@ -14,8 +14,22 @@ desired, pull requests are welcome!
 
 ## Role Variables
 
+Here is a sampling of valuable role variables that may be of interest to the user.
 
-Please see `vars/main.yml` for a full list, but here are the few that are probably of value:
+##### Degoss Variables
+
+Variables for configuring the `degoss` role.
+
+<dl>
+  <dt><code>degoss_debug</code></dt>
+  <dd>Booleanish value that decides whether to output debug information or not. Defaults to <code>false</code>.</dd>
+  <dt><code>degoss_no_clean</code></dt>
+  <dd>Booleanish value that decides whether to clean all Goss binaries and tests from the machine after the run. Defaults to <code>false</code>, which means that by default, `degoss` will remove all traces from a machine after finished. Set to <code>true</code> to enable caching the Goss binary on the machine.</dd>
+</dl>
+
+##### Goss Variables
+
+Variables affecting the runtime of Goss.
 
 <dl>
   <dt><code>goss_file</code></dt>
