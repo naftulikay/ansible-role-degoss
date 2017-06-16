@@ -49,13 +49,17 @@ class CallbackModule(CallbackBase):
         facts = vm.get_vars(loader=loader, task=task, host=host, play=play) if vm else {}
 
         if result.is_failed() and 'format_goss_output' in task.tags:
-            # pretty print goss output
+            # if we had a failure and the task is failed with format_goss_output, errors will be formatted
             self.print_goss_output(facts.get('goss_output', {}), facts.get('goss_output_format'), error=True)
-        elif 'format_goss_output' in task.tags and \
+
+        if not result.is_failed() and task.action == 'goss' and 'format_goss_output' in task.tags and \
                 (facts.get('degoss_dump_output', False) or facts.get('degoss_debug', False)):
+            # if result is successful, this is a goss run, it has been tagged for formatting, and debug mode is enabled,
+            # success will be displayed
             self.print_goss_output(facts.get('goss_output', {}), facts.get('goss_output_format'), error=False)
 
         if 'format_goss_stacktrace' in task.tags:
+            # if the module failed and there's a stacktrace, print it prettily
             self.print_python_stacktrace(facts.get('goss_output', {}).get('exception', ''))
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
