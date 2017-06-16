@@ -84,7 +84,18 @@ test: status
 
 test-0000-pass:
 	@# execute the playbook in a passing mode
-	docker exec -it $(CONTAINER_ID) env ANSIBLE_FORCE_COLOR=yes ansible-playbook $(ROLE_FLAGS) $(MOUNT_PATH)/tests/playbook.yml
+	( \
+		docker exec -it $(CONTAINER_ID) env ANSIBLE_FORCE_COLOR=yes \
+			ansible-playbook $(ROLE_FLAGS) $(MOUNT_PATH)/tests/playbook.yml ; \
+	) | tee $(PLAYBOOK_LOG_FILE)
+
+	@# establish that debug info went out and that it was accurate for this test case
+	@if ! grep -qP '(?<=Failed:\s)0' $(PLAYBOOK_LOG_FILE) ; then \
+		echo "ERROR: Did not emit debugging information." >&2 ; \
+		exit 1 ; \
+	else \
+		echo -e "$$(tput setaf 2 && tput bold)SUCCESS: Zero test failures and debug output is being emitted.$$(tput sgr0)" ; \
+	fi
 
 test-0001-fail:
 	@# execute the playbook in a failing mode; has to run in subshell because of wonky tee return codes
