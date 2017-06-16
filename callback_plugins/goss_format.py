@@ -48,19 +48,21 @@ class CallbackModule(CallbackBase):
         vm = task._variable_manager
         facts = vm.get_vars(loader=loader, task=task, host=host, play=play) if vm else {}
 
+        goss_output = facts.get('goss_output', {})
+
         if result.is_failed() and 'format_goss_output' in task.tags:
             # if we had a failure and the task is failed with format_goss_output, errors will be formatted
-            self.print_goss_output(facts.get('goss_output', {}), facts.get('goss_output_format'), error=True)
+            self.print_goss_output(goss_output, facts.get('goss_output_format'), error=True)
 
         if not result.is_failed() and task.action == 'goss' and 'format_goss_output' in task.tags and \
                 (facts.get('degoss_dump_output', False) or facts.get('degoss_debug', False)):
             # if result is successful, this is a goss run, it has been tagged for formatting, and debug mode is enabled,
             # success will be displayed
-            self.print_goss_output(facts.get('goss_output', {}), facts.get('goss_output_format'), error=False)
+            self.print_goss_output(goss_output, facts.get('goss_output_format'), error=False)
 
         if 'format_goss_stacktrace' in task.tags:
             # if the module failed and there's a stacktrace, print it prettily
-            self.print_python_stacktrace(facts.get('goss_output', {}).get('exception', ''))
+            self.print_python_stacktrace(goss_output.get('exception', goss_output.get('module_stderr', "")))
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         self.funnel(result)
