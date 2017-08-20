@@ -1,26 +1,10 @@
 ---
-# vars file for degoss
-# degoss configuration
-degoss_tmp_root: /tmp/degoss
-degoss_test_root: "{{ degoss_tmp_root }}/tests"
-degoss_goss_install_dir: "{{ degoss_tmp_root }}/bin"
-degoss_goss_bin: "{{ degoss_goss_install_dir }}/goss"
-
 degoss_idempotent: true
-degoss_changed_when: "not (degoss_idempotent | bool)"
-
 degoss_debug: false
 degoss_clean: true
 
-# goss configuration
 goss_version: latest
 goss_output_format: rspecish
-goss_github_repo_url: https://github.com/aelsabbahy/goss/
-# match: https://github.com/aelsabbahy/goss/releases/tag/v0.3.2 -> 0.3.2
-goss_github_version_regex: |
-  ^https://github\.com/[^/]+/goss/releases/tag/v(?P<release>\d+\.\d+\.\d+)$
-goss_github_replacement: |
-  \g<release>
 goss_file: goss.yml
 goss_addtl_files: []
 goss_addtl_dirs: []

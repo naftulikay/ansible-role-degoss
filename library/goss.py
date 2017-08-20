@@ -112,7 +112,9 @@ def main():
 
     result = dict(rc=rc, stdout=stdout, stderr=stderr)
 
-    succeed(module, **result) if rc == 0 else fail(module, "Goss Tests Failed.", **result)
+    succeed(module, **result) if rc == 0 else fail(
+        module, "Goss Tests Failed: {}".format(stdout + stderr), **result
+    )
 
 
 if __name__ == "__main__":
