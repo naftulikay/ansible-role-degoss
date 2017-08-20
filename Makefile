@@ -1,20 +1,16 @@
 #!/usr/bin/make -f
-SHELL:=/bin/bash
-
 ROLE_NAME:=degoss
 MOUNT_PATH:=/etc/ansible/roles/$(ROLE_NAME)
+
+# TODO trusty needs not systemd flags
 SYSTEMD_FLAGS:=--privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro
+
 LOCAL_FLAGS:=-v $(shell pwd):$(MOUNT_PATH):ro -v $(shell pwd)/ansible.cfg:/etc/ansible/ansible.cfg:ro
 SELINUX_FLAGS:=
 
 CONTAINER_ID_DIR:=/tmp/container/$(IMAGE_NAME)
 CONTAINER_ID_FILE:=$(CONTAINER_ID_DIR)/id
 CONTAINER_ID:=$(shell cat "$(CONTAINER_ID_FILE)" 2>/dev/null)
-
-PLAYBOOK_LOG_FILE=$(CONTAINER_ID_DIR)/lastrun.log
-PLAYBOOK_RC_FILE=$(CONTAINER_ID_DIR)/rc
-
-ROLE_FLAGS:=-e degoss_no_clean=true -e degoss_debug=true
 
 validate:
 ifeq ($(IMAGE_NAME),)
@@ -62,64 +58,20 @@ restart:
 	$(MAKE) start
 
 shell: status
-	docker exec -it $(CONTAINER_ID) /bin/bash
+	docker exec -it $(CONTAINER_ID) /bin/bash -
 
-install-galaxy:
-	@# only run ansible galaxy if need be
-	@test -e tests/requirements.yml && \
-		docker exec -it $(CONTAINER_ID) ansible-galaxy install -r ${MOUNT_PATH}/tests/requirements.yml || true
-
-display-ansible-version:
-	@# display the version of ansible we're working with
-	docker exec $(CONTAINER_ID) ansible --version
-
-test: status
+test:
+	@if [ -z "$(CONTAINER_ID)" ]; then \
+		echo "ERROR: Container Not Running" >&2 ; \
+		exit 1 ; \
+	fi
 	@# need a way to ask systemd in the container to wait until all services up
 	docker exec $(CONTAINER_ID) ansible --version
 	docker exec $(CONTAINER_ID) wait-for-boot
-
-	@# TODO idempotency and clean state between tests
-	$(MAKE) test-0000-pass
-	$(MAKE) test-0001-fail
-
-test-0000-pass:
-	@# execute the playbook in a passing mode
-	( \
-		docker exec -it $(CONTAINER_ID) env ANSIBLE_FORCE_COLOR=yes \
-			ansible-playbook $(ROLE_FLAGS) $(MOUNT_PATH)/tests/playbook.yml ; \
-	) | tee $(PLAYBOOK_LOG_FILE)
-
-	@# establish that debug info went out and that it was accurate for this test case
-	@if ! grep -qP '(?<=Failed:\s)0' $(PLAYBOOK_LOG_FILE) ; then \
-		echo "ERROR: Did not emit debugging information." >&2 ; \
-		exit 1 ; \
-	else \
-		echo -e "$$(tput setaf 2 && tput bold)SUCCESS: Zero test failures and debug output is being emitted.$$(tput sgr0)" ; \
-	fi
-
-test-0001-fail:
-	@# execute the playbook in a failing mode; has to run in subshell because of wonky tee return codes
-	@( docker exec -it $(CONTAINER_ID) env ANSIBLE_FORCE_COLOR=yes \
-			ansible-playbook -e should=fail $(ROLE_FLAGS) $(MOUNT_PATH)/tests/playbook.yml \
-				; echo $$? > $(PLAYBOOK_RC_FILE) ; \
-	) | tee $(PLAYBOOK_LOG_FILE)
-
-	@# check that the playbook failed
-	@playbook_rc=$$(cat $(PLAYBOOK_RC_FILE)) ; \
-	if [ -z "$${playbook_rc}" -a "$${playbook_rc}" != "0" ]; then \
-		echo "ERROR: Playbook was expected to fail and had a zero return status." >&2 ; \
-		exit 1 ; \
-	fi
-
-	@# evaluate that the number of tests failed is greater than 0
-	@failed_count=$$(grep -oP '(?<=Failed:\s)(\d+)' $(PLAYBOOK_LOG_FILE) | tail -n 1) ; \
-	if [ $$failed_count -ne 2 ]; then \
-		echo "ERROR: No tasks failed, expected at least two failures." >&2 ; \
-		exit 1 ; \
-	fi
-
-	@# I don't care anymore, but this comes out in bold green
-	@echo -e "$$(tput setaf 2 && tput bold)SUCCESS: Failed as per expectations; rc=$$(cat $(PLAYBOOK_RC_FILE)), failures=$$(grep -oP '(?<=Failed:\s)(\d+)' $(PLAYBOOK_LOG_FILE) | tail -n 1).$$(tput sgr0)"
+	test -f ${MOUNT_PATH}/tests/requirements.yml && \
+		docker exec $(CONTAINER_ID) ansible-galaxy install -r ${MOUNT_PATH}/tests/requirements.yml || true
+	docker exec $(CONTAINER_ID) env ANSIBLE_FORCE_COLOR=yes \
+		ansible-playbook $(MOUNT_PATH)/tests/playbook.yml
 
 test-clean:
 	$(MAKE) restart

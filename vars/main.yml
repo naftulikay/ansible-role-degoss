@@ -5,8 +5,12 @@ degoss_tmp_root: /tmp/degoss
 degoss_test_root: "{{ degoss_tmp_root }}/tests"
 degoss_goss_install_dir: "{{ degoss_tmp_root }}/bin"
 degoss_goss_bin: "{{ degoss_goss_install_dir }}/goss"
+
 degoss_idempotent: true
 degoss_changed_when: "not (degoss_idempotent | bool)"
+
+degoss_debug: false
+degoss_clean: true
 
 # goss configuration
 goss_version: latest

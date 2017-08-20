@@ -7,21 +7,19 @@
     - name: create otherwise nonexistent file
       copy: content="" dest=/tmp/nonexistent
 
-- name: role
+- name: pass
   hosts: all
   become: true
   any_errors_fatal: true
-  vars:
-    should: 'pass'
   roles:
     - role: degoss
-      degoss_no_clean: true
+      degoss_clean: false
       degoss_debug: true
       goss_file: goss.yml
       goss_addtl_dirs: [goss]
       goss_env_vars:
         distro: "{{ ansible_distribution | lower }}"
-        should: "{{ should }}"
+        should: "pass"
         boolean: true
         list:
           - one
@@ -30,3 +28,26 @@
         dict:
           a: b
           c: d
+
+- name: fail
+  hosts: all
+  become: true
+  any_errors_fatal: true
+  roles:
+    - role: degoss
+      degoss_clean: false
+      degoss_debug: true
+      goss_file: goss.yml
+      goss_addtl_dirs: [goss]
+      goss_env_vars:
+        distro: "{{ ansible_distribution | lower }}"
+        should: "fail"
+        boolean: true
+        list:
+          - one
+          - two
+          - three
+        dict:
+          a: b
+          c: d
+      when: fail is defined

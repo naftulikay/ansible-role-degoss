@@ -1,5 +1,0 @@
----
-# defaults file for degoss
-version: latest
-tests: goss.yml
-format: rspecish

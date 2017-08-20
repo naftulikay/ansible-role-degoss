@@ -3,4 +3,5 @@
 __pycache__
 
 # root level ignores
+/.galaxy-roles
 /.vagrant
