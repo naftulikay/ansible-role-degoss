@@ -58,6 +58,7 @@
   goss:
     executable: "{{ degoss_goss_bin }}"
     path: "{{ goss_file }}"
+    cwd: "{{ degoss_test_root }}"
     format: "{{ goss_output_format }}"
     env_vars: "{{ goss_env_vars }}"
   failed_when: false
@@ -72,9 +73,7 @@
 
 # our output callback plugin will catch the tag of this and format output accordingly
 - name: report errors
-  fail:
-    msg: |-
-      Goss Tests Failed: {{ goss_output.get('stdout').strip() }}"
+  fail: msg="Goss Tests Failed."
   when: goss_output.get('goss_failed') | bool
   tags: [format_goss_output]
 

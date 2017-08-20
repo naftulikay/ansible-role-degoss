@@ -19,6 +19,11 @@ options:
     required: true
     description:
       - A Goss test file to execute, locally available on the remote machine.
+  cwd:
+    required: false
+    default: $HOME
+    description:
+      - The working directory to operate from.
   format:
     required: false
     default: rspecish
@@ -53,10 +58,10 @@ def log(msg):
     sys.stderr.write("{}\n".format(msg))
 
 # launch goss validate command on the file
-def evaluate(module, test_file, output_format, executable, env_vars):
+def evaluate(module, test_file, output_format, executable, env_vars, cwd):
     return module.run_command(
         "{0} -g {1} validate --format {2}".format(executable, test_file, output_format),
-        environ_update=env_vars
+        environ_update=env_vars, cwd=cwd,
     )
 
 def succeed(module, **kwargs):
@@ -69,6 +74,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             path=dict(required=True, type='str'),
+            cwd=dict(required=False, type='str', default=os.path.expanduser('.')),
             format=dict(required=False, type='str', choices=GOSS_OUTPUT_FORMATS),
             executable=dict(required=False, type='str', default='goss'),
             env_vars=dict(required=False, type='dict', default={})
@@ -76,7 +82,12 @@ def main():
         supports_check_mode=False
     )
 
-    test_file = os.path.expanduser(module.params['path'])  # test file path
+    workdir = os.path.abspath(module.params['cwd'])
+    test_file = module.params['path'] # test file path
+
+    if not os.path.isabs(test_file):
+        test_file = os.path.abspath(os.path.join(workdir, test_file))
+
     fmt = module.params['format']  # goss output format
     executable = module.params['executable']
     env_vars = module.params['env_vars'] or {}
@@ -108,12 +119,12 @@ def main():
 
     sys.stderr.write("{}\n".format(env_vars))
 
-    rc, stdout, stderr = evaluate(module, test_file, fmt, executable, env_vars)
+    rc, stdout, stderr = evaluate(module, test_file, fmt, executable, env_vars, workdir)
 
     result = dict(rc=rc, stdout=stdout, stderr=stderr)
 
     succeed(module, **result) if rc == 0 else fail(
-        module, "Goss Tests Failed: {}".format(stdout + stderr), **result
+        module, "Goss Tests Failed.", **result
     )
 
 
