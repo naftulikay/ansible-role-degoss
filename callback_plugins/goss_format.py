@@ -13,6 +13,8 @@ class CallbackModule(CallbackBase):
 
     CALLBACK_VERSION = 2.0
     CALLBACK_NAME = 'goss_format'
+    CALLBACK_TYPE = 'stdout'
+    CALLBACK_NEEDS_WHITELIST = False
 
     def print_goss_output(self, result, output_format, error=True):
         """Pretty-print output for a Goss run."""
@@ -55,7 +57,7 @@ class CallbackModule(CallbackBase):
             self.print_goss_output(goss_output, facts.get('goss_output_format'), error=True)
 
         if not result.is_failed() and task.action == 'goss' and 'format_goss_output' in task.tags and \
-                (facts.get('degoss_dump_output', False) or facts.get('degoss_debug', False)):
+                facts.get('degoss_debug', False):
             # if result is successful, this is a goss run, it has been tagged for formatting, and debug mode is enabled,
             # success will be displayed
             self.print_goss_output(goss_output, facts.get('goss_output_format'), error=False)

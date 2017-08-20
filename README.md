@@ -23,8 +23,8 @@ Variables for configuring the `degoss` role.
 <dl>
   <dt><code>degoss_debug</code></dt>
   <dd>Booleanish value that decides whether to output debug information or not. Defaults to <code>false</code>.</dd>
-  <dt><code>degoss_no_clean</code></dt>
-  <dd>Booleanish value that decides whether to clean all Goss binaries and tests from the machine after the run. Defaults to <code>false</code>, which means that by default, `degoss` will remove all traces from a machine after finished. Set to <code>true</code> to enable caching the Goss binary on the machine.</dd>
+  <dt><code>degoss_clean</code></dt>
+  <dd>Booleanish value that decides whether to clean all Goss binaries and tests from the machine after the run. Defaults to <code>true</code>, which means that by default, `degoss` will remove all traces from a machine after finished. Set to <code>false</code> to enable caching the Goss binary on the machine.</dd>
 </dl>
 
 ##### Goss Variables
