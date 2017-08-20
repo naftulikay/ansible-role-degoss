@@ -1,0 +1,7 @@
+---
+goss_github_repo_url: https://github.com/aelsabbahy/goss/
+goss_download_url: "{{ goss_github_repo_url }}/releases/download/v{{ goss_real_version }}/goss-linux-amd64"
+goss_github_version_regex: |
+  ^https://github\.com/[^/]+/goss/releases/tag/v(?P<release>\d+\.\d+\.\d+)$
+goss_github_replacement: |
+  \g<release>

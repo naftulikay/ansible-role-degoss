@@ -18,6 +18,3 @@
   set_fact:
     goss_real_version: "{{ detected_latest_url.location | regex_replace(diagnosis, prescription) }}"
   when: goss_version == "latest"
-
-- name: output detected version
-  debug: msg="Installing Latest Goss ({{ goss_real_version }})..."
