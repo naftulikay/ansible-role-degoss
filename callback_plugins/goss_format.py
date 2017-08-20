@@ -13,7 +13,6 @@ class CallbackModule(CallbackBase):
 
     CALLBACK_VERSION = 2.0
     CALLBACK_NAME = 'goss_format'
-    CALLBACK_TYPE = 'stdout'
     CALLBACK_NEEDS_WHITELIST = False
 
     def print_goss_output(self, result, output_format, error=True):
