@@ -71,7 +71,7 @@ test:
 	test -f ${MOUNT_PATH}/tests/requirements.yml && \
 		docker exec $(CONTAINER_ID) ansible-galaxy install -r ${MOUNT_PATH}/tests/requirements.yml || true
 	docker exec $(CONTAINER_ID) env ANSIBLE_FORCE_COLOR=yes \
-		ansible-playbook $(MOUNT_PATH)/tests/playbook.yml
+		ansible-playbook -v $(MOUNT_PATH)/tests/playbook.yml
 
 test-clean:
 	$(MAKE) restart
