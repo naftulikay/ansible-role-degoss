@@ -1,7 +1,7 @@
 galaxy_info:
   name: degoss
   src: naftulikay.degoss
-  version: v1.3.1
+  version: v1.4.0
   author: Naftuli Kay
   description: Install, run, and remove Goss and tests against a system.
 

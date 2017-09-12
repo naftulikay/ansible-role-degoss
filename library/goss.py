@@ -114,8 +114,11 @@ def main():
             # leave it be
             continue
         else:
-            # anything more complicated, let JSON do its thing
-            env_vars[key] = json.dumps(value)
+            # anything more complicated, let JSON do its thing or just stringify
+            try:
+                env_vars[key] = json.dumps(value)
+            except:
+                env_vars[key] = str(value)
 
     sys.stderr.write("{}\n".format(env_vars))
 
