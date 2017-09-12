@@ -1,4 +1,16 @@
 ---
+degoss_idempotent: true
+degoss_debug: false
+degoss_clean: true
+degoss_changed_when: not (degoss_idempotent | bool)
+
+goss_version: latest
+goss_output_format: rspecish
+goss_file: goss.yml
+goss_addtl_files: []
+goss_addtl_dirs: []
+goss_env_vars: {}
+
 goss_github_repo_url: https://github.com/aelsabbahy/goss/
 goss_download_url: "{{ goss_github_repo_url }}/releases/download/v{{ goss_real_version }}/goss-linux-amd64"
 goss_github_version_regex: |

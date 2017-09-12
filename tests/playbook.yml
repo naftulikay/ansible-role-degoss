@@ -6,6 +6,7 @@
   tasks:
     - name: create otherwise nonexistent file
       copy: content="" dest=/tmp/nonexistent
+      changed_when: false
 
 - name: pass
   hosts: all
