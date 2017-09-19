@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import, print_function
+
 import json, os, re, sys
 from ansible.module_utils.basic import *
 from ansible.module_utils.six import integer_types, string_types
