@@ -6,7 +6,9 @@ from __future__ import absolute_import, print_function
 from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
 
+import inspect
 import json
+import six
 
 
 class CallbackModule(CallbackBase):
@@ -47,7 +49,28 @@ class CallbackModule(CallbackBase):
         role = task._role
         play = role._play if role else None
         vm = task._variable_manager
-        facts = vm.get_vars(loader=loader, task=task, host=host, play=play) if vm else {}
+
+        if not vm:
+            return
+
+        # due to ansible 2.4.0.0 changing the method signature, we have to do reflection to tailor our call to get_vars
+        get_vars_args = {
+            'loader': loader,
+            'task': task,
+            'host': host,
+            'play': play
+        }
+
+        if six.PY3:
+            # getargspec on Python 3 is deprecated, avoid deprecation warning
+            allowed_get_vars_args = inspect.signature(vm.get_vars).parameters.keys()
+        else:
+            allowed_get_vars_args = inspect.getargspec(vm.get_vars).args
+
+        # filter arguments to fit
+        get_vars_args = { k: v for k, v in get_vars_args.items() if k in allowed_get_vars_args }
+
+        facts = vm.get_vars(**get_vars_args) if vm else {}
 
         goss_output = facts.get('goss_output', {})
 
