@@ -13,10 +13,10 @@
     degoss_goss_bin: "{{ workdir.stdout.strip() }}/bin/goss"
 
 # switch to pinned vs latest
-- include: versions/latest.yml
+- include_tasks: versions/latest.yml
   when: goss_version == "latest"
 
-- include: versions/pinned.yml
+- include_tasks: versions/pinned.yml
   when: goss_version != "latest"
 
 # create goss directories
