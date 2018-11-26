@@ -11,6 +11,7 @@
     degoss_test_root: "{{ workdir.stdout.strip() }}/tests"
     degoss_goss_install_dir: "{{ workdir.stdout.strip() }}/bin"
     degoss_goss_bin: "{{ workdir.stdout.strip() }}/bin/goss"
+    goss_file_basename: "{{ goss_file.split('/')[-1] }}"
 
 # switch to pinned vs latest
 - include_tasks: versions/latest.yml
@@ -49,7 +50,17 @@
 
 # deploy test files including the main and additional test files
 - name: deploy test files
-  copy: src={{ item }} dest={{ degoss_test_root }} mode=0644 directory_mode=0755 setype=user_tmp_t
+  copy:
+    src: |-
+      {%- if item.startswith('/') -%}
+        {{ item }}
+      {%- else -%}
+        {{ playbook_dir | default(".") }}/{{ item }}
+      {%- endif -%}
+    dest: "{{ degoss_test_root }}"
+    mode: 0644
+    directory_mode: 0755
+    setype: user_tmp_t
   with_items: "{{ [goss_file] + goss_addtl_files + goss_addtl_dirs }}"
   changed_when: degoss_changed_when
 
@@ -57,7 +68,7 @@
 - name: run tests
   goss:
     executable: "{{ degoss_goss_bin }}"
-    path: "{{ goss_file }}"
+    path: "./{{ goss_file_basename }}"
     cwd: "{{ degoss_test_root }}"
     format: "{{ goss_output_format }}"
     env_vars: "{{ goss_env_vars }}"
@@ -73,7 +84,12 @@
 
 # our output callback plugin will catch the tag of this and format output accordingly
 - name: report errors
-  fail: msg="Goss Tests Failed."
+  fail:
+    msg:
+      message: Goss Tests Failed.
+      rc: "{{ goss_output.rc }}"
+      tmp_root: "{{ degoss_tmp_root }}"
+      version: "{{ goss_real_version }}"
   when: goss_output.get('goss_failed') | bool
   tags: [format_goss_output]
 
