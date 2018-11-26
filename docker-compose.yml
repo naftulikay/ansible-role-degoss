@@ -1,0 +1,64 @@
+---
+version: '3'
+services:
+
+  dind:
+    container_name: dind
+    image: docker:stable-dind
+    privileged: true
+
+  centos7:
+    container_name: centos7
+    image: naftulikay/centos-vm:latest
+    privileged: true
+    depends_on:
+      - dind
+    links:
+      - dind:docker
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - ./:/etc/ansible/roles/default:ro
+      - ./ansible.cfg:/etc/ansible/ansible.cfg:ro
+    stop_grace_period: 1s
+
+  loki:
+    container_name: loki
+    image: naftulikay/loki-vm:latest
+    privileged: true
+    depends_on:
+      - dind
+    links:
+      - dind:docker
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - ./:/etc/ansible/roles/default:ro
+      - ./ansible.cfg:/etc/ansible/ansible.cfg:ro
+    stop_grace_period: 1s
+
+  trusty:
+    container_name: trusty
+    image: naftulikay/trusty-vm:latest
+    privileged: true
+    depends_on:
+      - dind
+    links:
+      - dind:docker
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - ./:/etc/ansible/roles/default:ro
+      - ./ansible.cfg:/etc/ansible/ansible.cfg:ro
+    stop_grace_period: 1s
+
+  xenial:
+    container_name: xenial
+    image: naftulikay/xenial-vm:latest
+    privileged: true
+    depends_on:
+      - dind
+    links:
+      - dind:docker
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - ./:/etc/ansible/roles/default:ro
+      - ./ansible.cfg:/etc/ansible/ansible.cfg:ro
+    stop_grace_period: 1s

@@ -13,7 +13,7 @@
   become: true
   any_errors_fatal: true
   roles:
-    - role: degoss
+    - role: default
       degoss_clean: false
       degoss_debug: true
       goss_file: goss.yml
@@ -35,7 +35,7 @@
   become: true
   any_errors_fatal: true
   roles:
-    - role: degoss
+    - role: default
       degoss_clean: false
       degoss_debug: true
       goss_file: goss.yml
