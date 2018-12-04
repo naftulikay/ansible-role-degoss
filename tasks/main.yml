@@ -2,51 +2,16 @@
 - name: create workdir
   command: mktemp -d /tmp/degoss.XXXXXXXXXX
   register: workdir
-  changed_when: degoss_changed_when
+  changed_when: false
 
-# set play facts
 - name: establish facts
   set_fact:
     degoss_tmp_root: "{{ workdir.stdout.strip() }}"
-    degoss_test_root: "{{ workdir.stdout.strip() }}/tests"
-    degoss_goss_install_dir: "{{ workdir.stdout.strip() }}/bin"
-    degoss_goss_bin: "{{ workdir.stdout.strip() }}/bin/goss"
-    goss_file_basename: "{{ goss_file.split('/')[-1] }}"
+    degoss_test_dir: "{{ workdir.stdout.strip() }}/tests"
 
-# switch to pinned vs latest
-- include_tasks: versions/latest.yml
-  when: goss_version == "latest"
-
-- include_tasks: versions/pinned.yml
-  when: goss_version != "latest"
-
-# create goss directories
-- name: create goss directories
-  file: path={{ item }} state=directory
-  with_items:
-    - "{{ degoss_tmp_root }}"
-    - "{{ degoss_test_root }}"
-    - "{{ degoss_goss_install_dir }}"
-  changed_when: degoss_changed_when
-
-# download goss
-- name: install
-  get_url:
-    url: "{{ goss_download_url }}"
-    dest: "{{ degoss_goss_bin }}-{{ item }}"
-    mode: 0755
-  with_items:
-    - "{{ goss_real_version }}"
-  changed_when: degoss_changed_when
-
-# symlink
-- name: link
-  file:
-    state: link
-    src: "{{ degoss_goss_bin }}-{{ goss_real_version }}"
-    dest: "{{ degoss_goss_bin }}"
-    force: true
-  changed_when: degoss_changed_when
+- name: create directories
+  file: path={{ degoss_test_dir }} state=directory
+  changed_when: false
 
 # deploy test files including the main and additional test files
 - name: deploy test files
@@ -57,43 +22,21 @@
       {%- else -%}
         {{ playbook_dir | default(".") }}/{{ item }}
       {%- endif -%}
-    dest: "{{ degoss_test_root }}"
+    dest: "{{ degoss_test_dir }}"
     mode: 0644
     directory_mode: 0755
     setype: user_tmp_t
   with_items: "{{ [goss_file] + goss_addtl_files + goss_addtl_dirs }}"
-  changed_when: degoss_changed_when
+  changed_when: false
 
 # run the tests
 - name: run tests
-  goss:
-    executable: "{{ degoss_goss_bin }}"
-    path: "./{{ goss_file_basename }}"
-    cwd: "{{ degoss_test_root }}"
-    format: "{{ goss_output_format }}"
-    env_vars: "{{ goss_env_vars }}"
-  failed_when: false
-  register: goss_output
-  tags: [format_goss_output]
-
-# clean everything up
-- name: clean
-  file: path={{ degoss_tmp_root }} state=absent
-  when: degoss_clean | bool
-  changed_when: degoss_changed_when
-
-# our output callback plugin will catch the tag of this and format output accordingly
-- name: report errors
-  fail:
-    msg:
-      message: Goss Tests Failed.
-      rc: "{{ goss_output.rc }}"
-      tmp_root: "{{ degoss_tmp_root }}"
-      version: "{{ goss_real_version }}"
-  when: goss_output.get('goss_failed') | bool
-  tags: [format_goss_output]
-
-- name: report module errors
-  fail: msg="Goss Module Run Failed."
-  when: goss_output.get('msg')|lower == "module failure"
-  tags: [format_goss_stacktrace]
+  degoss:
+    clean: "{{ degoss_clean }}"
+    clean_on_failure: "{{ degoss_clean_on_failure }}"
+    debug: "{{ degoss_debug }}"
+    facts: "{{ ansible_facts | to_json }}"
+    test_dir: "{{ degoss_test_dir }}"
+    test_file: "{{ goss_file }}"
+    tmp_root: "{{ degoss_tmp_root }}"
+    variables: "{{ goss_variables | default({}) | to_json }}"

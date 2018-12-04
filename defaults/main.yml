@@ -1,19 +1,18 @@
 ---
-degoss_idempotent: true
-degoss_debug: false
+# Remove all traces of Goss from the system after running tests.
 degoss_clean: true
-degoss_changed_when: not (degoss_idempotent | bool)
+# Clean up even on failures, set this to false to be able to inspect logs and data returned by Goss on the filesystem
+degoss_clean_on_failure: true
+# Enable debug-level logging.
+degoss_debug: false
+# Enable verbose logging when tests fail; include logging output in the returned task result.
+degoss_verbose: false
 
+# A dictionary of variables to make available to Goss at runtime (e.g. {{.Vars.my_variable}})
+goss_variables: {}
+# The version of Goss to install (e.g. 0.3.6) or 'latest' to detect the latest available version and use that.
 goss_version: latest
-goss_output_format: rspecish
-goss_file: goss.yml
+# The main Goss file entrypoint to execute tests with.
+goss_file: null
 goss_addtl_files: []
 goss_addtl_dirs: []
-goss_env_vars: {}
-
-goss_github_repo_url: https://github.com/aelsabbahy/goss/
-goss_download_url: "{{ goss_github_repo_url }}/releases/download/v{{ goss_real_version }}/goss-linux-amd64"
-goss_github_version_regex: |
-  ^https://github\.com/[^/]+/goss/releases/tag/v(?P<release>\d+\.\d+\.\d+)$
-goss_github_replacement: |
-  \g<release>
