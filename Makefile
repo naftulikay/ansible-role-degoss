@@ -15,14 +15,26 @@ start:
 shell: start
 	@docker exec -it $(IMAGE) bash
 
-test: start
+dependencies: start
 	@docker exec $(IMAGE) ansible --version
 	@docker exec $(IMAGE) wait-for-boot
 	@if [ -e tests/requirements.yml ] ; then \
 		docker exec $(IMAGE) ansible-galaxy install -r /etc/ansible/roles/default/tests/requirements.yml ; \
 	fi
+
+integration-test: dependencies
+	@# execute integration tests
 	@docker exec $(IMAGE) env ANSIBLE_FORCE_COLOR=yes \
 		ansible-playbook $(shell echo $$ANSIBLE_ARGS) /etc/ansible/roles/default/tests/playbook.yml
+
+unit-test: dependencies
+	@# execute unit tests
+	@docker exec $(IMAGE) env ANSIBLE_FORCE_COLOR=yes \
+		ansible-playbook $(shell echo $$ANSIBLE_ARGS) /etc/ansible/roles/default/tests/bootstrap-unit-tests.yml
+	@docker exec $(IMAGE) bash -c '(cd /etc/ansible/roles/default/ && python tests.py -vvv)'
+
+
+test: integration-test unit-test
 
 prepare-apply:
 	@mkdir -p target/ .ansible/galaxy-roles

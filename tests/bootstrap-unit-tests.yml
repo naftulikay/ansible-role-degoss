@@ -1,0 +1,14 @@
+---
+- name: bootstrap unit tests
+  hosts: all
+  become: true
+  tasks:
+    - name: refresh apt cache
+      apt: update_cache=yes cache_valid_time=3600
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: install pip
+      package: name=python-pip state=present
+
+    - name: install mock
+      pip: name=mock state=present

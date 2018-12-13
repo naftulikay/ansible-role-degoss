@@ -1,7 +1,10 @@
 ---
+command:
+  'hostname':
+    exit-status: 0
+    stdout:
+      - {{.Vars.ansible_hostname}}
+
 file:
   '/dev':
-    exists: {{.Env.boolean}}
-
-gossfile:
-  'goss/should-{{.Env.should}}.yml': {}
+    exists: true
