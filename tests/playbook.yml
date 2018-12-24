@@ -1,44 +1,20 @@
 ---
-- name: setup
+- name: wait for boot
   hosts: all
   become: true
-  any_errors_fatal: true
+  tasks:
+    - name: await boot
+      command: wait-for-boot
+
+- name: build
+  hosts: all
+  become: true
   tasks:
     - name: create otherwise nonexistent file
-      copy: content="" dest=/tmp/nonexistent
-      changed_when: false
+      copy: content="hurr durr it's murr durr" dest=/tmp/nonexistent
 
-- name: pass
+- name: test
   hosts: all
-  become: true
-  any_errors_fatal: true
   roles:
     - role: default
-      degoss_clean: false
-      degoss_debug: true
-
       goss_file: goss.yml
-      goss_addtl_dirs: [goss]
-
-# - name: fail
-  # hosts: all
-  # become: true
-  # any_errors_fatal: true
-  # roles:
-    # - role: default
-      # degoss_clean: false
-      # degoss_debug: true
-      # goss_file: goss.yml
-      # goss_addtl_dirs: [goss]
-      # goss_env_vars:
-        # distro: "{{ ansible_distribution | lower }}"
-        # should: "fail"
-        # boolean: true
-        # list:
-          # - one
-          # - two
-          # - three
-        # dict:
-          # a: b
-          # c: d
-      # when: fail is defined

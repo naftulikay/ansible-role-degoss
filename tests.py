@@ -16,6 +16,7 @@ import subprocess
 import sys
 import unittest
 
+
 class DegossTestCase(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):

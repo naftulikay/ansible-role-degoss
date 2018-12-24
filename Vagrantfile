@@ -11,7 +11,7 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Every Vagrant virtual environment requires a box to build off of.
   config.vm.box = "bento/centos-7.4"
-  config.vm.hostname = "devel"
+  config.vm.hostname = File.expand_path(File.dirname(__FILE__)).split('/')[-1]
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.

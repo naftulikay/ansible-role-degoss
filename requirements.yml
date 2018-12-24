@@ -1,3 +1,5 @@
 ---
 - src: naftulikay.vagrant-docker
   name: vagrant-docker
+- src: naftulikay.vagrant-python-dev
+  name: vagrant-python-dev

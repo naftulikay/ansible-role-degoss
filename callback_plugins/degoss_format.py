@@ -46,6 +46,9 @@ class CallbackModule(CallbackBase):
             output += (os.linesep * 2) + "(Count: {}, Failed: {}, Skipped: {})".format(
                 result.get('tests_total'), result.get('tests_failed'), 0)
 
+        # insert a trailing newline for when running against multiple hosts
+        output += os.linesep
+
         # emit output when successful or failed in the appropriate color
         self._display.display(output, color=C.COLOR_ERROR if failed else C.COLOR_OK)
 
