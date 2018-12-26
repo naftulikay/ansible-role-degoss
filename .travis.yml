@@ -1,18 +1,10 @@
 ---
 dist: trusty
+sudo: false
 
-matrix:
-  fast_finish: true
-
-services:
-  - docker
-
-env:
-  matrix: # each entry is its own run
-    - IMAGE: centos7
-    - IMAGE: xenial
-    - IMAGE: trusty
-    - IMAGE: loki
+language: python
+python: 3.6
+cache: pip
 
 script: make test
 

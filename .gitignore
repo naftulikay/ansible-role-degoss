@@ -3,5 +3,8 @@
 __pycache__
 
 # root level ignores
-/.ansible
+/.ansible/galaxy-roles
 /.vagrant
+
+/tests/.ansible/galaxy-roles
+/tests/.ansible/roles

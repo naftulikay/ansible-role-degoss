@@ -2,4 +2,7 @@
 - name: configure
   hosts: all
   become: true
-  roles: [vagrant-docker]
+  roles:
+    - role: vagrant-docker
+    - role: vagrant-python-dev
+      python_version: 3.6.7
