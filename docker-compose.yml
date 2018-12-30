@@ -11,7 +11,7 @@ services:
 
   centos7:
     container_name: centos7
-    image: naftulikay/centos-vm:latest
+    image: naftulikay/centos7-vm:latest
     privileged: true
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
