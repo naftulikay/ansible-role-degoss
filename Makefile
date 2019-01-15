@@ -5,10 +5,8 @@ SHELL:=$(shell which bash)
 clean:
 	@docker-compose down
 
-build:
-	@docker-compose up -d --build
-
-start: build
+start:
+	@docker-compose up -d
 
 pip:
 	@pip install -q $(shell test -z "$$TRAVIS" && echo "--user") -r requirements.txt ; \
@@ -16,7 +14,7 @@ pip:
 install: pip
 
 unittest: pip
-	@python tests.py -vvv
+	@if [ -e tests.py ]; then python tests.py -vvv ; fi
 
 test: install start unittest
 	@make -C tests/ test
