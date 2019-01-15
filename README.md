@@ -1,13 +1,17 @@
-# ansible-role-degoss [![Build Status][travis.svg]][travis]
+# ansible-role-degoss [![Build Status][travis.svg]][travis] [![Documentation][docs.svg]][docs]
 
 A system testing framework using [Ansible][ansible] and [Goss][goss] to execute system test cases against one or many
 machines with minimal side-effects.
 
 `degoss` _deploys_ your test cases to the machine, _installs_ a specified or latest version of Goss, _tests_ your
 system via the defined test cases, _cleans_ by removing all Goss-related files from disk, and then _reports_ test
-results to Ansible's output.
+results to Ansible's output. Check out [the documentation][docs] for more information.
 
 Available on Ansible Galaxy at [`naftulikay.degoss`][galaxy].
+
+## Documentation
+
+Documentation [is hosted on Read the Docs][docs] and describes installation, usage, and configuration options.
 
 ## Requirements
 
@@ -28,6 +32,8 @@ Licensed at your discretion under either:
 
 
  [ansible]: https://github.com/ansible/ansible/
+ [docs]: https://degoss.readthedocs.io/en/latest/?badge=latest
+ [docs.svg]: https://readthedocs.org/projects/degoss/badge/?version=latest
  [galaxy]: https://galaxy.ansible.com/naftulikay/degoss/
  [goss]: https://goss.rocks
  [issue:ansible-ssl]: https://github.com/ansible/ansible/issues/36791

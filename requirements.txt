@@ -1,2 +1,5 @@
 ansible
+guzzle_sphinx_theme
 mock
+sphinx==1.6.6
+sphinx-reload
