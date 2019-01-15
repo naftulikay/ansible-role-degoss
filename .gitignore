@@ -1,10 +1,52 @@
-*.pyo
-*.pyc
+# Ansible
+.ansible/galaxy-roles
+.ansible/roles
+*.retry
+
+# Native
+
+*.a
+*.a
+*.app
+*.d
+*.dll
+*.dylib
+*.elf
+*.exe
+*.exp
+*.gch
+*.hex
+*.i*86
+*.ilk
+*.ko
+*.la
+*.lib
+*.lo
+*.map
+*.o
+*.obj
+*.out
+*.pch
+*.so
+*.so.*
+*.x86_64
+
+# Python
+/bin/
+/build/
+/develop-eggs/
+/dist/
+/eggs/
+/parts/
+/src/*.egg-info
+/.eggs/
+/.installed.cfg
+/.python-version
+
 __pycache__
+*.pyc
+*.pyo
 
-# root level ignores
-/.ansible/galaxy-roles
-/.vagrant
-
-/tests/.ansible/galaxy-roles
-/tests/.ansible/roles
+# Vagrant
+.vagrant/
+*-VBoxSVC-*.log
