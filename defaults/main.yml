@@ -5,8 +5,6 @@ degoss_clean: true
 degoss_clean_on_failure: true
 # Enable debug-level logging.
 degoss_debug: false
-# Enable verbose logging when tests fail; include logging output in the returned task result.
-degoss_verbose: false
 
 # A dictionary of variables to make available to Goss at runtime (e.g. {{.Vars.my_variable}})
 goss_variables: {}
