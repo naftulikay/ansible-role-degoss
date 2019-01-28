@@ -14,6 +14,9 @@ pip:
 docs: pip
 	@make -C docs/ html
 
+serve: pip
+	@sphinx-reload --host 0.0.0.0 --port 5500 docs/
+
 install: pip
 
 unittest: pip
