@@ -317,10 +317,9 @@ class DegossTestCase(unittest.TestCase):
         mock_new_request.assert_called_with("https://github.com/aelsabbahy/goss/releases/latest")
 
     @mock.patch('library.degoss.os.chmod')
-    @mock.patch('library.degoss.open')
     @mock.patch.object(Degoss, 'request')
     @mock.patch.object(Degoss, 'get_release_url')
-    def test_install(self, mock_get_release_url, mock_new_request, mock_fopen, mock_chmod):
+    def test_install(self, mock_get_release_url, mock_new_request, mock_chmod):
         """Tests that degoss can install Goss successfully."""
         mock_get_release_url.return_value = 'fhwgads'
 
@@ -337,25 +336,22 @@ class DegossTestCase(unittest.TestCase):
         mock_response.read = chunk_once
         mock_new_request.return_value = 200, 'url', mock_response
 
-        mock_file = mock.MagicMock()
-        mock_file_enterer = mock.MagicMock()
-        mock_file_enterer.__enter__.return_value = mock_file
-        mock_fopen.return_value = mock_file_enterer
-
-        self.service.install()
+        patched_open = mock.mock_open()
+        with mock.patch("library.degoss.open", patched_open, create=True):
+            self.service.install()
 
         mock_get_release_url.assert_called_with()
         mock_new_request.assert_called_with('fhwgads')
 
-        mock_fopen.assert_called_with(self.service.executable, 'w')
-        mock_file.write.assert_called_with('ABCDEFG')
+        patched_open.assert_called_with(self.service.executable, 'w')
+        file_handle = patched_open()
+        file_handle.write.assert_called_with('ABCDEFG')
 
         mock_chmod.assert_called_with(self.service.executable, 0o700)
 
-    @mock.patch('library.degoss.open')
     @mock.patch.object(Degoss, 'fail')
     @mock.patch('library.degoss.subprocess.Popen')
-    def test_run_tests_success(self, mock_new_popen, mock_fail, mock_fopen):
+    def test_run_tests_success(self, mock_new_popen, mock_fail):
         """Tests that degoss can handle successful tests appropriately."""
         result_dict = {
             'summary': {
@@ -368,11 +364,6 @@ class DegossTestCase(unittest.TestCase):
         mock_process = mock.MagicMock()
         mock_process.communicate.return_value = result_string, None
         mock_new_popen.return_value = mock_process
-
-        mock_file = mock.MagicMock()
-        mock_file_enterer = mock.MagicMock()
-        mock_file_enterer.__enter__.return_value = mock_file
-        mock_fopen.return_value = mock_file_enterer
 
         # create facts and variables as strings to be deserialized
         self.service.facts = json.dumps({
@@ -392,8 +383,16 @@ class DegossTestCase(unittest.TestCase):
             'var2': None,
         }
 
+        patched_open = mock.mock_open()
         # run
-        self.service.test()
+        with mock.patch("library.degoss.open", patched_open, create=True):
+            self.service.test()
+
+        # it must have opened the result file
+        patched_open.assert_called_with(self.service.result_file, 'w')
+        file_handle = patched_open()
+        # it must have written the result to the result file
+        file_handle.write.assert_called_with(json.dumps(result_dict, indent=2, sort_keys=True))
 
         # a new process should have been opened like this
         mock_new_popen.assert_called_with(
@@ -411,10 +410,6 @@ class DegossTestCase(unittest.TestCase):
 
         # it must not have failed
         mock_fail.assert_not_called()
-        # it must have opened the result file
-        mock_fopen.assert_called_with(self.service.result_file, 'w')
-        # it must have written the result to the result file
-        mock_file.write.assert_called_with(json.dumps(result_dict, indent=2, sort_keys=True))
 
         self.assertTrue(self.service._has_run and self.service.has_run)
         self.assertFalse(self.service._errored)
@@ -423,10 +418,9 @@ class DegossTestCase(unittest.TestCase):
         self.assertEqual(5, self.service.total_tests)
         self.assertEqual(self.service.test_result, result_dict)
 
-    @mock.patch('library.degoss.open')
     @mock.patch.object(Degoss, 'fail')
     @mock.patch('library.degoss.subprocess.Popen')
-    def test_run_tests_failure(self, mock_new_popen, mock_fail, mock_fopen):
+    def test_run_tests_failure(self, mock_new_popen, mock_fail):
         """Tests that degoss can handle failed tests appropriately."""
         result_dict = {
             'results': [
@@ -445,15 +439,17 @@ class DegossTestCase(unittest.TestCase):
         mock_process.communicate.return_value = result_string, None
         mock_new_popen.return_value = mock_process
 
-        mock_file = mock.MagicMock()
-        mock_file_enterer = mock.MagicMock()
-        mock_file_enterer.__enter__.return_value = mock_file
-        mock_fopen.return_value = mock_file_enterer
-
         self.service.facts, self.service.variables = {}, {}
 
+        patched_open = mock.mock_open()
         # run
-        self.service.test()
+        with mock.patch("library.degoss.open", patched_open, create=True):
+            self.service.test()
+
+        patched_open.assert_called_with(self.service.result_file, 'w')
+        file_handle = patched_open()
+        # result file must be written
+        file_handle.write.assert_called_with(json.dumps(result_dict, indent=2, sort_keys=True))
 
         # just stubs here, all the logic up until process execution completion is the same
 
@@ -462,9 +458,6 @@ class DegossTestCase(unittest.TestCase):
 
         # communicate must be passed varialbes
         mock_process.communicate.assert_called_with(input='{}')
-
-        # result file must be written
-        mock_file.write.assert_called_with(json.dumps(result_dict, indent=2, sort_keys=True))
 
         # instance variables
         self.assertEqual(result_dict, self.service.test_result)
@@ -478,10 +471,9 @@ class DegossTestCase(unittest.TestCase):
         # it's a failure, but not a critical failue
         mock_fail.assert_not_called()
 
-    @mock.patch('library.degoss.open')
     @mock.patch.object(Degoss, 'fail')
     @mock.patch('library.degoss.subprocess.Popen')
-    def test_run_tests_error(self, mock_new_popen, mock_fail, mock_fopen):
+    def test_run_tests_error(self, mock_new_popen, mock_fail):
         """Tests that degoss can handle error cases when running tests."""
         result_string = "ERROR: some shit didn't work!"
 
@@ -490,19 +482,18 @@ class DegossTestCase(unittest.TestCase):
         mock_process.returncode = 1
         mock_new_popen.return_value = mock_process
 
-        mock_file = mock.MagicMock()
-        mock_file_enterer = mock.MagicMock()
-        mock_file_enterer.__enter__.return_value = mock_file
-        mock_fopen.return_value = mock_file_enterer
-
         self.service.facts, self.service.variables = {}, {}
 
+        patched_open = mock.mock_open()
         # run
-        self.service.test()
+        with mock.patch("library.degoss.open", patched_open, create=True):
+            self.service.test()
+
+        file_handle = patched_open()
+        file_handle.write.assert_not_called()
 
         mock_new_popen.assert_called()
         mock_process.communicate.assert_called_with(input='{}')
-        mock_file.write.assert_not_called()
         mock_fail.assert_called_with("Goss Execution Failed (Unable to run tests) (rc=1)", stdout_lines=[result_string], rc=1 )
 
         self.assertTrue(self.service._errored)
