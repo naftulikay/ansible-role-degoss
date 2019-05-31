@@ -34,35 +34,44 @@ description:
     - Download, execute, and remove Goss against test cases located on disk.
 options:
     clean:
+        type: bool
         required: false
         default: true
         description: If true, tmp_dir will be recursively removed at the end of the run.
     clean_on_failure:
+        type: bool
         required: false
         default: true
         description: If false, degoss will not remove the temporary directory on a failed run.
     debug:
+        type: bool
         required: false
         default: false
         description: Set the logger level to debug instead of the default, which is info.
     facts:
+        type: dict
         required: false
         default: empty dictionary
         description: A dictionary of Ansible facts to securely pass into the Goss execution.
     test_dir:
+        type: path
         required: true
         description: The directory in which test files are located.
     test_file:
+        type: str
         required: true
         description: The test file to execute Goss against.
     tmp_root:
+        type: path
         required: true
         description: The temporary root directory to remove after running.
     variables:
+        type: dict
         required: false
         default: empty dictionary
         description: A dictionary of variables to pass into the Goss execution.
     version:
+        type: str
         required: false
         default: latest
         description: If latest, the latest available Goss version, otherwise the specified version, e.g. 0.3.6.
@@ -80,15 +89,15 @@ def main(argv=sys.argv):
     """Main entrypoint into the module, instantiates and executes the service."""
     Degoss(argv, AnsibleModule(
         argument_spec=dict(
-            clean=dict(required=False, default=True),
-            clean_on_failure=dict(required=False, default=True),
-            debug=dict(required=False, default=False),
-            facts=dict(required=False, default='{}'),
-            test_dir=dict(required=True),
-            test_file=dict(required=True),
-            tmp_root=dict(required=True),
-            variables=(dict(required=False, default='{}')),
-            version=dict(required=False, default='latest'),
+            clean=dict(type='bool', required=False, default=True),
+            clean_on_failure=dict(type='bool', required=False, default=True),
+            debug=dict(type='bool', required=False, default=False),
+            facts=dict(type='dict', required=False, default='{}'),
+            test_dir=dict(type='path', required=True),
+            test_file=dict(type='str', required=True),
+            tmp_root=dict(type='path', required=True),
+            variables=(dict(type='dict', required=False, default='{}')),
+            version=dict(type='str', required=False, default='latest'),
         )
     )).execute()
 
