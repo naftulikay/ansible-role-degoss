@@ -10,7 +10,9 @@
     degoss_test_dir: "{{ workdir.stdout.strip() }}/tests"
 
 - name: create directories
-  file: path={{ degoss_test_dir }} state=directory
+  file:
+    path: "{{ degoss_test_dir }}"
+    state: directory
   changed_when: false
 
 # deploy test files including the main and additional test files
@@ -26,15 +28,15 @@
     mode: 0644
     directory_mode: 0755
     setype: user_tmp_t
-  with_items: "{{ [goss_file] + goss_addtl_files + goss_addtl_dirs }}"
+  loop: "{{ [goss_file] + goss_addtl_files + goss_addtl_dirs }}"
   changed_when: false
 
 # run the tests
 - name: run tests
   degoss:
-    clean: "{{ degoss_clean }}"
-    clean_on_failure: "{{ degoss_clean_on_failure }}"
-    debug: "{{ degoss_debug }}"
+    clean: "{{ degoss_clean | bool }}"
+    clean_on_failure: "{{ degoss_clean_on_failure | bool }}"
+    debug: "{{ degoss_debug | bool }}"
     facts: "{{ ansible_facts | to_json }}"
     test_dir: "{{ degoss_test_dir }}"
     test_file: "{{ goss_file }}"
