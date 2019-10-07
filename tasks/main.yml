@@ -1,6 +1,6 @@
 ---
 - name: create workdir
-  command: mktemp -d /tmp/degoss.XXXXXXXXXX
+  command: "mktemp -d {{ degoss_workdir }}/degoss.XXXXXXXXXX"
   register: workdir
   changed_when: false
 
