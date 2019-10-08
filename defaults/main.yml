@@ -6,7 +6,7 @@ degoss_clean_on_failure: true
 # Enable debug-level logging.
 degoss_debug: false
 # Sets directory where degoss will put test files on the remote host
-degoss_workdir: "/tmp"
+degoss_base_workdir: "/tmp"
 
 # A dictionary of variables to make available to Goss at runtime (e.g. {{.Vars.my_variable}})
 goss_variables: {}
