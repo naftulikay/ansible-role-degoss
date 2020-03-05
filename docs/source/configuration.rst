@@ -41,6 +41,8 @@ For more information, see :doc:`logging <logging>`.
 Additional variables to send to Goss during execution. All Ansible facts are exposed automatically to Goss at runtime,
 but this can be used to send additional variables into the test execution context.
 
+Accessible in templating via ``"{{ .Vars.variable }}"``
+
 ``goss_version``
 ----------------
 
